@@ -1,0 +1,421 @@
+export type TenantSummary = {
+  tenantID: number
+  tenant_name: string
+  house_name: string
+  partition_number: string
+  rent_amount?: string
+}
+
+export type AuthUser = {
+  email: string
+  name: string
+  role: string
+  isAdmin: boolean
+  isTenant: boolean
+  tenant: TenantSummary | null
+}
+
+export type SessionResponse = {
+  ok: boolean
+  authenticated: boolean
+  user: AuthUser | null
+}
+
+export type DashboardResponse =
+  | {
+      ok: true
+      mode: 'admin'
+      stats: {
+        houses: number
+        tenants: number
+        invoices: number
+        payments: number
+      }
+      finance: {
+        month: string
+        monthCollections: number
+        pendingInvoices: number
+      }
+    }
+  | {
+      ok: true
+      mode: 'tenant'
+      stay: {
+        house: string
+        partition: string
+        rent: string
+      }
+      stats: {
+        invoices: number
+        complaints: number
+      }
+    }
+
+export type House = {
+  houseID: number
+  house_name: string
+  number_of_rooms: number
+  rent_amount: number
+  location: string
+  num_of_bedrooms: number
+  house_status: string
+  partition_count: number
+  available_partition_count: number
+  photo_count: number
+  partitions_url: string
+}
+
+export type HousesResponse = {
+  ok: boolean
+  canManage: boolean
+  items: House[]
+}
+
+export type Partition = {
+  partition_id: number
+  house_id: number
+  house_name: string
+  location: string
+  partition_number: string
+  rent_amount: number
+  partition_status: string
+  description: string
+  facilities: string[]
+  photo_count: number
+}
+
+export type PartitionsResponse = {
+  ok: boolean
+  canManage: boolean
+  selected_house_id: number
+  items: Partition[]
+}
+
+export type Tenant = {
+  tenantID: number
+  tenant_name: string
+  email: string
+  ID_number: string
+  profession: string
+  phone_number: string
+  telegram_username: string
+  telegram_chat_id: string
+  tenant_address: string
+  tenant_home_country_address: string
+  tenant_country: string
+  start_date: string
+  end_date: string
+  dateAdmitted: string
+  agreement_file: string
+  house_name: string
+  houseID: number
+  partition_number: string
+  rent_amount: number
+}
+
+export type TenantsResponse = {
+  ok: boolean
+  items: Tenant[]
+}
+
+export type LoginResponse = {
+  ok: boolean
+  user: AuthUser
+  message?: string
+  errors?: Record<string, string>
+}
+
+export type Invoice = {
+  invoiceNumber: string
+  tenant_name: string
+  phone_number: string
+  tenantID: number
+  amountDue: number
+  total_amount: number
+  dateOfInvoice: string
+  dateDue: string
+  status: string
+  comment: string
+  latestPaymentID: number
+  invoice_pdf_url: string
+  receipt_pdf_url: string
+}
+
+export type InvoicesResponse = {
+  ok: boolean
+  canManage: boolean
+  items: Invoice[]
+}
+
+export type Payment = {
+  paymentID: number
+  tenantID: number
+  tenant_name: string
+  house_name: string
+  invoiceNumber: string
+  expectedAmount: number
+  amountPaid: number
+  balance: number
+  mpesaCode: string
+  dateofPayment: string
+  comment: string
+  invoice_pdf_url: string
+  receipt_pdf_url: string
+}
+
+export type PaymentsResponse = {
+  ok: boolean
+  items: Payment[]
+}
+
+export type Complaint = {
+  complaint_id: number
+  tenant_id: number
+  tenant_name: string
+  email: string
+  house_name: string
+  partition_number: string
+  title: string
+  description: string
+  status: string
+  admin_reason: string
+  reopened_count: number
+  created_at: string
+  updated_at: string
+}
+
+export type ComplaintsResponse = {
+  ok: boolean
+  canManage: boolean
+  items: Complaint[]
+}
+
+export type Notice = {
+  notice_id: number
+  tenant_id: number
+  tenant_name: string
+  email: string
+  house_name: string
+  partition_number: string
+  subject: string
+  message: string
+  sender_role: string
+  created_by_name: string
+  status: string
+  admin_reply: string
+  created_at: string
+  updated_at: string
+}
+
+export type NoticeRecipient = {
+  tenantID: number
+  tenant_name: string
+  email: string
+  house_name: string
+  partition_number: string
+}
+
+export type NoticesResponse = {
+  ok: boolean
+  canManage: boolean
+  items: Notice[]
+  recipients: NoticeRecipient[]
+}
+
+export type Expense = {
+  expense_id: number
+  expense_date: string
+  category: string
+  title: string
+  house_name: string
+  partition_number: string
+  vendor_name: string
+  amount: number
+  attachment_path: string
+  attachment_kind: string
+  is_image_attachment: boolean
+  notes: string
+}
+
+export type ExpensesResponse = {
+  ok: boolean
+  selectedMonth: string
+  selectedCategory: string
+  categories: string[]
+  summary: {
+    start: string
+    end: string
+    rent_collected: number
+    dewa_paid: number
+    other_expenses: number
+    total_expenses: number
+    net_earning: number
+  }
+  items: Expense[]
+}
+
+export type ReportBreakdown = {
+  category: string
+  total: number
+}
+
+export type ReportRoom = {
+  tenantID: number
+  tenant_name: string
+  house_name: string
+  partition_id: number
+  partition_number: string
+  rent_collected: number
+  direct_expenses: number
+  net_earning: number
+}
+
+export type ReportPartition = {
+  partition_id: number
+  partition_number: string
+  partition_status: string
+  house_name: string
+  rent_collected: number
+  direct_expenses: number
+  net_earning: number
+}
+
+export type ReportsResponse = {
+  ok: boolean
+  selectedMonth: string
+  selectedYear: number
+  selectedQuarter: number
+  monthly: {
+    start: string
+    end: string
+    rent_collected: number
+    dewa_paid: number
+    other_expenses: number
+    total_expenses: number
+    net_earning: number
+  }
+  quarterly: {
+    start: string
+    end: string
+    rent_collected: number
+    dewa_paid: number
+    other_expenses: number
+    total_expenses: number
+    net_earning: number
+  }
+  expenseBreakdown: ReportBreakdown[]
+  roomReport: ReportRoom[]
+  partitionReport: ReportPartition[]
+}
+
+export type DeletedTenant = {
+  tenantID: number
+  tenant_name: string
+  house_name: string
+  partition_number: string
+  email: string
+  ID_number: string
+  phone_number: string
+  tenant_country: string
+  rent_amount: number
+  start_date: string
+  end_date: string
+  exit_date: string
+  tenant_status: string
+}
+
+export type DeletedTenantsResponse = {
+  ok: boolean
+  items: DeletedTenant[]
+}
+
+export type BlogPost = {
+  id: number
+  title: string
+  content: string
+  date: string
+}
+
+export type PostsResponse = {
+  ok: boolean
+  items: BlogPost[]
+}
+
+export type BlogComment = {
+  id: number
+  blogid: number
+  name: string
+  comment: string
+  date: string
+  post_title: string
+}
+
+export type CommentsResponse = {
+  ok: boolean
+  items: BlogComment[]
+}
+
+export type AdminUserRow = {
+  id: number
+  name: string
+  email: string
+  date: string
+  role: string
+}
+
+export type UsersResponse = {
+  ok: boolean
+  items: AdminUserRow[]
+}
+
+export type CountryRecord = {
+  name: string
+  code: string
+  iso: string
+}
+
+export type FormOptionsResponse = {
+  ok: boolean
+  countries: CountryRecord[]
+  expense_categories: string[]
+  houses: Array<{
+    houseID: number
+    house_name: string
+    number_of_rooms: number
+    location: string
+    rent_amount: number
+    house_status: string
+  }>
+  partitions: Array<{
+    partition_id: number
+    house_id: number
+    partition_number: string
+    rent_amount: number
+    partition_status: string
+    house_name: string
+  }>
+  activeTenants: Array<{
+    tenantID: number
+    tenant_name: string
+    email: string
+    rent_amount: number
+  }>
+  openInvoices: Array<{
+    invoiceNumber: string
+    tenantID: number
+    tenant_name: string
+    amountDue: number
+    dateDue: string
+    status: string
+  }>
+  locations: Array<{
+    id: number
+    location_name: string
+    geo_id: string
+  }>
+  roles: string[]
+  partition_facilities: string[]
+  defaultCountry: string
+  defaultPhoneCode: string
+  canManage: boolean
+}

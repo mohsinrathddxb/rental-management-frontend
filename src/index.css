@@ -150,6 +150,29 @@ a {
   border-radius: 24px !important;
 }
 
+.auth-links {
+  display: flex;
+  margin-top: 14px;
+}
+
+.auth-links a {
+  color: #163657;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-links a:hover {
+  color: #9f7d2f;
+}
+
+.auth-card .ant-form-item {
+  margin-bottom: 18px;
+}
+
+.auth-helper {
+  margin-bottom: 18px;
+}
+
 .eyebrow {
   display: inline-flex;
   width: fit-content;

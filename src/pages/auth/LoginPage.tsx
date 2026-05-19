@@ -1,8 +1,8 @@
 import { LockOutlined, MailOutlined } from '@ant-design/icons'
 import { AxiosError } from 'axios'
-import { Alert, Button, Card, Form, Input, Typography } from 'antd'
+import { Alert, Button, Card, Form, Input, Space, Typography } from 'antd'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/auth-context'
 
 type LoginFormValues = {
@@ -12,9 +12,17 @@ type LoginFormValues = {
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const successMessage =
+    typeof location.state === 'object' &&
+    location.state &&
+    'successMessage' in location.state &&
+    typeof location.state.successMessage === 'string'
+      ? location.state.successMessage
+      : ''
 
   const handleFinish = async (values: LoginFormValues) => {
     setSubmitting(true)
@@ -40,21 +48,29 @@ export function LoginPage() {
         <div className="auth-copy">
           <Typography.Text className="eyebrow">Rental Manager</Typography.Text>
           <Typography.Title>
-            Sign in to the new React admin frontend
+            Sign in to the React rental frontend
           </Typography.Title>
           <Typography.Paragraph>
-            This app uses the current PHP backend and keeps the same session
-            authentication while we migrate the frontend page by page.
+            Admins and tenants both use the current PHP backend while we migrate
+            the frontend page by page.
           </Typography.Paragraph>
         </div>
 
         <Card className="auth-card">
-          <Typography.Title level={3}>Admin Login</Typography.Title>
+          <Typography.Title level={3}>Account Login</Typography.Title>
           {errorMessage ? (
             <Alert
               type="error"
               showIcon
               message={errorMessage}
+              style={{ marginBottom: 16 }}
+            />
+          ) : null}
+          {successMessage ? (
+            <Alert
+              type="success"
+              showIcon
+              message={successMessage}
               style={{ marginBottom: 16 }}
             />
           ) : null}
@@ -90,6 +106,10 @@ export function LoginPage() {
             >
               Sign In
             </Button>
+            <Space className="auth-links" direction="vertical" size={6}>
+              <Link to="/forgot-password">Forgot Password?</Link>
+              <Link to="/signup">Create Tenant Account</Link>
+            </Space>
           </Form>
         </Card>
       </div>

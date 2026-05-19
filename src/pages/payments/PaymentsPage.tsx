@@ -2,15 +2,16 @@ import {
   FilePdfOutlined,
   FileTextOutlined,
   PlusOutlined,
+  SendOutlined,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
-import { Alert, Button, Card, Space, Spin, Table, Tag, Typography } from 'antd'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Alert, Button, Card, Space, Spin, Table, Tag, Typography, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { http } from '../../lib/http'
-import type { Payment, PaymentsResponse } from '../../lib/types'
+import type { Payment, PaymentsResponse, TelegramActionResponse } from '../../lib/types'
 
 async function fetchPayments() {
   const { data } = await http.get<PaymentsResponse>('/resources/payments.php')
@@ -22,6 +23,22 @@ export function PaymentsPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['payments'],
     queryFn: fetchPayments,
+  })
+
+  const telegramMutation = useMutation({
+    mutationFn: async (paymentID: number) => {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/payment-actions.php', {
+        paymentID,
+        telegram_action: 'send_receipt',
+      })
+      return data
+    },
+    onSuccess: (response) => {
+      message.success(response.message || 'Payment receipt sent on Telegram.')
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'Payment receipt could not be sent on Telegram.')
+    },
   })
 
   const columns: ColumnsType<Payment> = [
@@ -61,6 +78,16 @@ export function PaymentsPage() {
             target="_blank"
           >
             Receipt PDF
+          </Button>
+          <Button
+            icon={<SendOutlined />}
+            loading={telegramMutation.isPending && telegramMutation.variables === record.paymentID}
+            onClick={() => telegramMutation.mutate(record.paymentID)}
+            size="small"
+            type="primary"
+            ghost
+          >
+            Send Telegram
           </Button>
         </Space>
       ),

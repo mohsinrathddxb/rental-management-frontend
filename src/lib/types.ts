@@ -125,6 +125,15 @@ export type LoginResponse = {
   errors?: Record<string, string>
 }
 
+export type ApiMessageResponse = {
+  ok: boolean
+  message: string
+}
+
+export type TelegramActionResponse = ApiMessageResponse & {
+  chat_id?: string
+}
+
 export type Invoice = {
   invoiceNumber: string
   tenant_name: string
@@ -203,6 +212,10 @@ export type Notice = {
   created_by_name: string
   status: string
   admin_reply: string
+  document_url: string
+  document_label: string
+  secondary_document_url: string
+  secondary_document_label: string
   created_at: string
   updated_at: string
 }
@@ -353,6 +366,35 @@ export type BlogComment = {
 export type CommentsResponse = {
   ok: boolean
   items: BlogComment[]
+}
+
+export type MessageRecord = {
+  id: number
+  names: string
+  email: string
+  message: string
+  date: string
+}
+
+export type MessagesResponse = {
+  ok: boolean
+  items: MessageRecord[]
+}
+
+export type MessageResponse = {
+  ok: boolean
+  item: MessageRecord
+  message?: string
+}
+
+export type SubscriberRecord = {
+  email: string
+  date: string
+}
+
+export type SubscribersResponse = {
+  ok: boolean
+  items: SubscriberRecord[]
 }
 
 export type AdminUserRow = {

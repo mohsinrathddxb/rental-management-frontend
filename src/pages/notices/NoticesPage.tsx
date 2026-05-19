@@ -1,17 +1,30 @@
+import { FileTextOutlined, SendOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Card, Form, Input, Select, Space, Spin, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Form, Input, Select, Space, Spin, Tag, Typography, message } from 'antd'
 import dayjs from 'dayjs'
 import { PageHeader } from '../../components/PageHeader'
 import { useAuth } from '../../lib/auth-context'
 import { http } from '../../lib/http'
-import type { NoticesResponse, Notice } from '../../lib/types'
+import type { NoticesResponse, Notice, TelegramActionResponse } from '../../lib/types'
 
 async function fetchNotices() {
   const { data } = await http.get<NoticesResponse>('/resources/notices.php')
   return data
 }
 
-function NoticeCard({ notice, canManage, onUpdate }: { notice: Notice; canManage: boolean; onUpdate: (values: { notice_id: number; status: string; admin_reply: string }) => void }) {
+function NoticeCard({
+  notice,
+  canManage,
+  isSending,
+  onSendTelegram,
+  onUpdate,
+}: {
+  notice: Notice
+  canManage: boolean
+  isSending: boolean
+  onSendTelegram: (noticeId: number) => void
+  onUpdate: (values: { notice_id: number; status: string; admin_reply: string }) => void
+}) {
   return (
     <Card style={{ marginBottom: 16 }}>
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
@@ -26,7 +39,34 @@ function NoticeCard({ notice, canManage, onUpdate }: { notice: Notice; canManage
         </Space>
         <Typography.Paragraph style={{ marginBottom: 0 }}>{notice.message}</Typography.Paragraph>
         {notice.admin_reply ? <Typography.Text><strong>Admin Reply:</strong> {notice.admin_reply}</Typography.Text> : null}
+        {notice.document_url || notice.secondary_document_url ? (
+          <Space wrap>
+            {notice.document_url ? (
+              <Button href={notice.document_url} icon={<FileTextOutlined />} size="small" target="_blank">
+                {notice.document_label || 'Attachment'}
+              </Button>
+            ) : null}
+            {notice.secondary_document_url ? (
+              <Button href={notice.secondary_document_url} icon={<FileTextOutlined />} size="small" target="_blank">
+                {notice.secondary_document_label || 'Attachment'}
+              </Button>
+            ) : null}
+          </Space>
+        ) : null}
         <Typography.Text type="secondary">Updated: {notice.updated_at ? dayjs(notice.updated_at).format('DD MMM YYYY HH:mm') : '-'}</Typography.Text>
+        {canManage ? (
+          <Space wrap>
+            <Button
+              icon={<SendOutlined />}
+              loading={isSending}
+              onClick={() => onSendTelegram(notice.notice_id)}
+              type="primary"
+              ghost
+            >
+              Send on Telegram
+            </Button>
+          </Space>
+        ) : null}
         {canManage ? (
           <Form layout="vertical" onFinish={(values) => onUpdate({ notice_id: notice.notice_id, status: values.status, admin_reply: values.admin_reply ?? '' })}>
             <Space align="start" wrap style={{ width: '100%' }}>
@@ -45,8 +85,41 @@ export function NoticesPage() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data, isLoading, isError } = useQuery({ queryKey: ['notices'], queryFn: fetchNotices })
-  const createMutation = useMutation({ mutationFn: (values: Record<string, string>) => http.post('/resources/notices.php', { action: 'create', ...values }), onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['notices'] }) })
-  const updateMutation = useMutation({ mutationFn: (values: { notice_id: number; status: string; admin_reply: string }) => http.post('/resources/notices.php', { action: 'update', ...values }), onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['notices'] }) })
+  const createMutation = useMutation({
+    mutationFn: (values: Record<string, string>) => http.post('/resources/notices.php', { action: 'create', ...values }),
+    onSuccess: async () => {
+      message.success('Notice created successfully.')
+      await queryClient.invalidateQueries({ queryKey: ['notices'] })
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'Notice could not be created.')
+    },
+  })
+  const updateMutation = useMutation({
+    mutationFn: (values: { notice_id: number; status: string; admin_reply: string }) => http.post('/resources/notices.php', { action: 'update', ...values }),
+    onSuccess: async () => {
+      message.success('Notice updated successfully.')
+      await queryClient.invalidateQueries({ queryKey: ['notices'] })
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'Notice could not be updated.')
+    },
+  })
+  const telegramMutation = useMutation({
+    mutationFn: async (noticeId: number) => {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/notice-actions.php', {
+        notice_id: noticeId,
+        telegram_action: 'send_notice',
+      })
+      return data
+    },
+    onSuccess: (response) => {
+      message.success(response.message || 'Notice sent on Telegram.')
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'Notice could not be sent on Telegram.')
+    },
+  })
 
   return (
     <div className="page-stack">
@@ -74,7 +147,16 @@ export function NoticesPage() {
           </Space>
         </Form>
       </Card>
-      {isLoading ? <Card><div className="page-loader"><Spin size="large" /></div></Card> : isError || !data?.ok ? <Alert type="error" showIcon message="Notice data could not be loaded." /> : data.items.map((notice) => <NoticeCard key={notice.notice_id} notice={notice} canManage={Boolean(data.canManage)} onUpdate={(values) => updateMutation.mutate(values)} />)}
+      {isLoading ? <Card><div className="page-loader"><Spin size="large" /></div></Card> : isError || !data?.ok ? <Alert type="error" showIcon message="Notice data could not be loaded." /> : data.items.map((notice) => (
+        <NoticeCard
+          key={notice.notice_id}
+          notice={notice}
+          canManage={Boolean(data.canManage)}
+          isSending={telegramMutation.isPending && telegramMutation.variables === notice.notice_id}
+          onSendTelegram={(noticeId) => telegramMutation.mutate(noticeId)}
+          onUpdate={(values) => updateMutation.mutate(values)}
+        />
+      ))}
     </div>
   )
 }

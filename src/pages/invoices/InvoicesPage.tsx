@@ -2,15 +2,16 @@ import {
   FilePdfOutlined,
   FileTextOutlined,
   PlusOutlined,
+  SendOutlined,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
-import { Alert, Button, Card, Space, Spin, Table, Tag, Typography } from 'antd'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Alert, Button, Card, Space, Spin, Table, Tag, Typography, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { http } from '../../lib/http'
-import type { Invoice, InvoicesResponse } from '../../lib/types'
+import type { Invoice, InvoicesResponse, TelegramActionResponse } from '../../lib/types'
 
 async function fetchInvoices() {
   const { data } = await http.get<InvoicesResponse>('/resources/invoices.php')
@@ -29,6 +30,22 @@ export function InvoicesPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['invoices'],
     queryFn: fetchInvoices,
+  })
+
+  const telegramMutation = useMutation({
+    mutationFn: async (invoiceNumber: string) => {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/invoice-actions.php', {
+        invoiceNumber,
+        telegram_action: 'send_invoice',
+      })
+      return data
+    },
+    onSuccess: (response) => {
+      message.success(response.message || 'Invoice sent on Telegram.')
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'Invoice could not be sent on Telegram.')
+    },
   })
 
   const columns: ColumnsType<Invoice> = [
@@ -81,6 +98,18 @@ export function InvoicesPage() {
               target="_blank"
             >
               Latest Receipt
+            </Button>
+          ) : null}
+          {data?.canManage ? (
+            <Button
+              icon={<SendOutlined />}
+              loading={telegramMutation.isPending && telegramMutation.variables === record.invoiceNumber}
+              onClick={() => telegramMutation.mutate(record.invoiceNumber)}
+              size="small"
+              type="primary"
+              ghost
+            >
+              Send Telegram
             </Button>
           ) : null}
         </Space>

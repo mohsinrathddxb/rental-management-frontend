@@ -3,16 +3,16 @@ import {
   BankOutlined,
   BookOutlined,
   BuildOutlined,
-  CommentOutlined,
   DashboardOutlined,
+  EnvironmentOutlined,
   FileDoneOutlined,
   FileTextOutlined,
+  MailOutlined,
   NotificationOutlined,
   LogoutOutlined,
   MenuUnfoldOutlined,
   SettingOutlined,
   ToolOutlined,
-  UserDeleteOutlined,
   UserOutlined,
   WalletOutlined,
   TeamOutlined,
@@ -27,6 +27,7 @@ import {
   Space,
   Typography,
 } from 'antd'
+import type { MenuProps } from 'antd'
 import type { PropsWithChildren, ReactNode } from 'react'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -35,140 +36,190 @@ import { useAuth } from '../lib/auth-context'
 const { Header, Content, Sider } = Layout
 const { useBreakpoint } = Grid
 
-type NavItem = {
-  key: string
-  icon: ReactNode
-  label: string
-  path: string
-  adminOnly?: boolean
+type AppMenuItem = NonNullable<MenuProps['items']>[number]
+
+function navLink(path: string, label: string, onNavigate?: () => void) {
+  return (
+    <Link onClick={onNavigate} to={path}>
+      {label}
+    </Link>
+  )
 }
 
-const NAV_ITEMS: NavItem[] = [
-  {
-    key: '/dashboard',
-    icon: <DashboardOutlined />,
-    label: 'Dashboard',
-    path: '/dashboard',
-  },
-  {
-    key: '/houses',
-    icon: <BankOutlined />,
-    label: 'Houses',
-    path: '/houses',
-  },
-  {
-    key: '/tenants',
-    icon: <TeamOutlined />,
-    label: 'Tenants',
-    path: '/tenants',
-  },
-  {
-    key: '/partitions',
-    icon: <AppstoreOutlined />,
-    label: 'Partitions',
-    path: '/partitions',
-  },
-  {
-    key: '/invoices',
-    icon: <FileTextOutlined />,
-    label: 'Invoices',
-    path: '/invoices',
-  },
-  {
-    key: '/payments',
-    icon: <WalletOutlined />,
-    label: 'Payments',
-    path: '/payments',
-    adminOnly: true,
-  },
-  {
-    key: '/expenses',
-    icon: <BuildOutlined />,
-    label: 'Expenses',
-    path: '/expenses',
-    adminOnly: true,
-  },
-  {
-    key: '/reports',
-    icon: <FileDoneOutlined />,
-    label: 'Reports',
-    path: '/reports',
-    adminOnly: true,
-  },
-  {
-    key: '/notices',
-    icon: <NotificationOutlined />,
-    label: 'Notices',
-    path: '/notices',
-  },
-  {
-    key: '/complaints',
-    icon: <ToolOutlined />,
-    label: 'Complaints',
-    path: '/complaints',
-  },
-  {
-    key: '/deleted-tenants',
-    icon: <UserDeleteOutlined />,
-    label: 'Archive',
-    path: '/deleted-tenants',
-    adminOnly: true,
-  },
-  {
-    key: '/posts',
-    icon: <BookOutlined />,
-    label: 'Posts',
-    path: '/posts',
-    adminOnly: true,
-  },
-  {
-    key: '/comments',
-    icon: <CommentOutlined />,
-    label: 'Comments',
-    path: '/comments',
-    adminOnly: true,
-  },
-  {
-    key: '/users',
-    icon: <UserOutlined />,
-    label: 'Admins',
-    path: '/users',
-    adminOnly: true,
-  },
-  {
-    key: '/settings',
-    icon: <SettingOutlined />,
-    label: 'Settings',
-    path: '/settings',
-  },
-  {
-    key: '/tools',
-    icon: <ToolOutlined />,
-    label: 'Tools',
-    path: '/tools',
-    adminOnly: true,
-  },
-]
+function menuItem(
+  key: string,
+  label: ReactNode,
+  icon?: ReactNode,
+  children?: AppMenuItem[],
+): AppMenuItem {
+  return { key, label, icon, children }
+}
+
+function menuGroup(label: string, children: AppMenuItem[]): AppMenuItem {
+  return { type: 'group', label, children }
+}
+
+function getMenuState(pathname: string) {
+  const openKeyByPath: Record<string, string> = {
+    '/create/house': 'houses',
+    '/partitions': 'houses',
+    '/houses': 'houses',
+    '/create/partition': 'houses',
+    '/create/tenant': 'tenants',
+    '/tenants': 'tenants',
+    '/deleted-tenants': 'tenants',
+    '/create/invoice': 'invoices',
+    '/invoices': 'invoices',
+    '/create/payment': 'payments',
+    '/payments': 'payments',
+    '/create/expense': 'expenses',
+    '/expenses': 'expenses',
+    '/posts': 'blog',
+    '/create/post': 'blog',
+    '/comments': 'blog',
+    '/messages': 'audience',
+    '/subscribers': 'audience',
+    '/users': 'accounts',
+    '/create/user': 'accounts',
+  }
+
+  if (pathname.startsWith('/messages/')) {
+    return {
+      selectedKeys: [pathname],
+      defaultOpenKeys: ['audience'],
+    }
+  }
+
+  return {
+    selectedKeys: [pathname],
+    defaultOpenKeys: openKeyByPath[pathname] ? [openKeyByPath[pathname]] : [],
+  }
+}
+
+function buildMenuItems(isAdmin: boolean, isTenant: boolean, onNavigate?: () => void) {
+  const housesChildren: AppMenuItem[] = []
+
+  if (isAdmin) {
+    housesChildren.push(
+      menuItem('/create/house', navLink('/create/house', 'Add a House', onNavigate)),
+    )
+  }
+
+  housesChildren.push(
+    menuItem(
+      '/partitions',
+      navLink('/partitions', isAdmin ? 'Add Partition' : 'View Partitions', onNavigate),
+    ),
+    menuItem(
+      '/houses',
+      navLink('/houses', isTenant ? 'Available Partitions' : 'View Houses', onNavigate),
+    ),
+  )
+
+  const mainItems: AppMenuItem[] = [
+    menuItem('/dashboard', navLink('/dashboard', 'Dashboard', onNavigate), <DashboardOutlined />),
+    menuItem('houses', 'Houses', <BankOutlined />, housesChildren),
+  ]
+
+  if (isAdmin) {
+    mainItems.push(
+      menuItem('tenants', 'Tenants', <TeamOutlined />, [
+        menuItem('/create/tenant', navLink('/create/tenant', 'Add Tenant', onNavigate)),
+        menuItem('/tenants', navLink('/tenants', 'View Tenants', onNavigate)),
+        menuItem(
+          '/deleted-tenants',
+          navLink('/deleted-tenants', 'Deleted / Moved Out', onNavigate),
+        ),
+      ]),
+    )
+  }
+
+  mainItems.push(
+    menuItem('invoices', 'Invoices', <FileTextOutlined />, [
+      ...(isAdmin
+        ? [menuItem('/create/invoice', navLink('/create/invoice', 'Add Invoice', onNavigate))]
+        : []),
+      menuItem(
+        '/invoices',
+        navLink('/invoices', isTenant ? 'My Invoices' : 'View Invoices', onNavigate),
+      ),
+    ]),
+  )
+
+  if (isAdmin) {
+    mainItems.push(
+      menuItem('payments', 'Payments', <WalletOutlined />, [
+        menuItem('/create/payment', navLink('/create/payment', 'New Payment', onNavigate)),
+        menuItem('/payments', navLink('/payments', 'View Payments', onNavigate)),
+      ]),
+      menuItem('expenses', 'Expenses', <BuildOutlined />, [
+        menuItem('/create/expense', navLink('/create/expense', 'Add Expense', onNavigate)),
+        menuItem('/expenses', navLink('/expenses', 'View Expenses', onNavigate)),
+      ]),
+      menuItem('/reports', navLink('/reports', 'Reports', onNavigate), <FileDoneOutlined />),
+    )
+  }
+
+  mainItems.push(
+    menuItem('/notices', navLink('/notices', 'Notices', onNavigate), <NotificationOutlined />),
+    menuItem(
+      '/complaints',
+      navLink('/complaints', isTenant ? 'My Complaints' : 'Complaints', onNavigate),
+      <ToolOutlined />,
+    ),
+  )
+
+  if (isAdmin) {
+    mainItems.push(
+      menuItem('blog', 'Blog', <BookOutlined />, [
+        menuItem('/posts', navLink('/posts', 'All Posts', onNavigate)),
+        menuItem('/create/post', navLink('/create/post', 'Create Post', onNavigate)),
+        menuItem('/comments', navLink('/comments', 'Comments', onNavigate)),
+      ]),
+      menuItem('audience', 'Audience', <MailOutlined />, [
+        menuItem('/messages', navLink('/messages', 'Messages', onNavigate)),
+        menuItem('/subscribers', navLink('/subscribers', 'Subscribers', onNavigate)),
+      ]),
+      menuItem(
+        '/create/location',
+        navLink('/create/location', 'Locations', onNavigate),
+        <EnvironmentOutlined />,
+      ),
+    )
+  }
+
+  const otherItems: AppMenuItem[] = []
+
+  if (isAdmin) {
+    otherItems.push(
+      menuItem('accounts', 'Accounts', <UserOutlined />, [
+        menuItem('/users', navLink('/users', 'Administrators', onNavigate)),
+        menuItem('/create/user', navLink('/create/user', 'Create Admin', onNavigate)),
+      ]),
+      menuItem('/tools', navLink('/tools', 'Tools', onNavigate), <AppstoreOutlined />),
+    )
+  }
+
+  otherItems.push(
+    menuItem('/settings', navLink('/settings', 'Account Setting', onNavigate), <SettingOutlined />),
+  )
+
+  return [menuGroup('Main Menu', mainItems), menuGroup('Other', otherItems)]
+}
 
 function NavigationMenu({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const { user } = useAuth()
-  const availableItems = NAV_ITEMS.filter((item) => !item.adminOnly || user?.isAdmin)
+  const { selectedKeys, defaultOpenKeys } = getMenuState(location.pathname)
+  const items = buildMenuItems(Boolean(user?.isAdmin), Boolean(user?.isTenant), onNavigate)
 
   return (
     <Menu
       theme="dark"
       mode="inline"
-      selectedKeys={[location.pathname]}
-      items={availableItems.map((item) => ({
-        key: item.key,
-        icon: item.icon,
-        label: (
-          <Link onClick={onNavigate} to={item.path}>
-            {item.label}
-          </Link>
-        ),
-      }))}
+      selectedKeys={selectedKeys}
+      defaultOpenKeys={defaultOpenKeys}
+      items={items}
     />
   )
 }

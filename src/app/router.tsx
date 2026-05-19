@@ -4,6 +4,10 @@ import type { ReactElement } from 'react'
 import { AppShell } from '../layouts/AppShell'
 import { useAuth } from '../lib/auth-context'
 import { LoginPage } from '../pages/auth/LoginPage'
+import { SignupPage } from '../pages/auth/SignupPage'
+import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage'
+import { VerifyOtpPage } from '../pages/auth/VerifyOtpPage'
+import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage'
 import { DashboardPage } from '../pages/dashboard/DashboardPage'
 import { ExpensesPage } from '../pages/expenses/ExpensesPage'
 import { ReportsPage } from '../pages/reports/ReportsPage'
@@ -17,6 +21,9 @@ import { NoticesPage } from '../pages/notices/NoticesPage'
 import { DeletedTenantsPage } from '../pages/deleted-tenants/DeletedTenantsPage'
 import { PostsPage } from '../pages/posts/PostsPage'
 import { CommentsPage } from '../pages/comments/CommentsPage'
+import { MessagesPage } from '../pages/messages/MessagesPage'
+import { MessageDetailPage } from '../pages/messages/MessageDetailPage'
+import { SubscribersPage } from '../pages/subscribers/SubscribersPage'
 import { UsersPage } from '../pages/users/UsersPage'
 import { SettingsPage } from '../pages/settings/SettingsPage'
 import { ToolsPage } from '../pages/tools/ToolsPage'
@@ -70,6 +77,24 @@ function PublicLoginRoute() {
   return <LoginPage />
 }
 
+function PublicAuthRoute({ children }: { children: ReactElement }) {
+  const { isLoading, isAuthenticated } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="page-loader">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return children
+}
+
 function AdminOnlyRoute({ children }: { children: ReactElement }) {
   const { isLoading, user } = useAuth()
 
@@ -93,6 +118,10 @@ export function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<PublicLoginRoute />} />
+        <Route path="/signup" element={<PublicAuthRoute><SignupPage /></PublicAuthRoute>} />
+        <Route path="/forgot-password" element={<PublicAuthRoute><ForgotPasswordPage /></PublicAuthRoute>} />
+        <Route path="/forgot-password/verify" element={<PublicAuthRoute><VerifyOtpPage /></PublicAuthRoute>} />
+        <Route path="/forgot-password/reset" element={<PublicAuthRoute><ResetPasswordPage /></PublicAuthRoute>} />
         <Route element={<ProtectedRoutes />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
@@ -108,6 +137,9 @@ export function AppRouter() {
           <Route path="/deleted-tenants" element={<AdminOnlyRoute><DeletedTenantsPage /></AdminOnlyRoute>} />
           <Route path="/posts" element={<AdminOnlyRoute><PostsPage /></AdminOnlyRoute>} />
           <Route path="/comments" element={<AdminOnlyRoute><CommentsPage /></AdminOnlyRoute>} />
+          <Route path="/messages" element={<AdminOnlyRoute><MessagesPage /></AdminOnlyRoute>} />
+          <Route path="/messages/:id" element={<AdminOnlyRoute><MessageDetailPage /></AdminOnlyRoute>} />
+          <Route path="/subscribers" element={<AdminOnlyRoute><SubscribersPage /></AdminOnlyRoute>} />
           <Route path="/users" element={<AdminOnlyRoute><UsersPage /></AdminOnlyRoute>} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/tools" element={<AdminOnlyRoute><ToolsPage /></AdminOnlyRoute>} />

@@ -2,15 +2,16 @@ import {
   FileTextOutlined,
   MailOutlined,
   PhoneOutlined,
+  SendOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
-import { Alert, Button, Card, Space, Spin, Table, Tag, Typography } from 'antd'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Alert, Button, Card, Space, Spin, Table, Tag, Typography, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { http } from '../../lib/http'
-import type { Tenant, TenantsResponse } from '../../lib/types'
+import type { TelegramActionResponse, Tenant, TenantsResponse } from '../../lib/types'
 
 async function fetchTenants() {
   const { data } = await http.get<TenantsResponse>('/resources/tenants.php')
@@ -19,9 +20,43 @@ async function fetchTenants() {
 
 export function TenantsPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { data, isLoading, isError } = useQuery({
     queryKey: ['tenants'],
     queryFn: fetchTenants,
+  })
+
+  const fetchChatIdMutation = useMutation({
+    mutationFn: async (tenantId: number) => {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions.php', {
+        tenant_id: tenantId,
+        telegram_action: 'fetch_chat_id',
+      })
+      return data
+    },
+    onSuccess: async (response) => {
+      message.success(response.message || 'Telegram chat ID fetched successfully.')
+      await queryClient.invalidateQueries({ queryKey: ['tenants'] })
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'Telegram chat ID could not be fetched.')
+    },
+  })
+
+  const sendTestMutation = useMutation({
+    mutationFn: async (tenantId: number) => {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions.php', {
+        tenant_id: tenantId,
+        telegram_action: 'send_test',
+      })
+      return data
+    },
+    onSuccess: (response) => {
+      message.success(response.message || 'Telegram test message sent.')
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'Telegram test message failed.')
+    },
   })
 
   const columns: ColumnsType<Tenant> = [
@@ -66,6 +101,40 @@ export function TenantsPage() {
           <Typography.Text>
             <PhoneOutlined /> {record.phone_number}
           </Typography.Text>
+        </Space>
+      ),
+    },
+    {
+      title: 'Telegram',
+      key: 'telegram',
+      render: (_, record) => (
+        <Space direction="vertical" size={4}>
+          <Typography.Text>{record.telegram_username ? `@${record.telegram_username}` : 'No username'}</Typography.Text>
+          <Typography.Text type="secondary">
+            {record.telegram_chat_id || 'No chat ID'}
+          </Typography.Text>
+          <Space wrap>
+            <Button
+              icon={<SendOutlined />}
+              loading={fetchChatIdMutation.isPending && fetchChatIdMutation.variables === record.tenantID}
+              onClick={() => fetchChatIdMutation.mutate(record.tenantID)}
+              size="small"
+              disabled={!record.telegram_username}
+            >
+              Fetch Chat ID
+            </Button>
+            <Button
+              icon={<SendOutlined />}
+              loading={sendTestMutation.isPending && sendTestMutation.variables === record.tenantID}
+              onClick={() => sendTestMutation.mutate(record.tenantID)}
+              size="small"
+              type="primary"
+              ghost
+              disabled={!record.telegram_chat_id}
+            >
+              Send Test
+            </Button>
+          </Space>
         </Space>
       ),
     },

@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { Alert, Button, Card, Form, Input, InputNumber, Select, Spin, Typography } from 'antd'
+import { Alert, Button, Card, Form, Input, InputNumber, Select, Space, Spin, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
@@ -21,6 +21,18 @@ export function CreatePaymentPage() {
   const [error, setError] = useState('')
   const [selectedInvoice, setSelectedInvoice] = useState<string>('')
   const invoice = useMemo(() => (data?.openInvoices ?? []).find((item) => item.invoiceNumber === selectedInvoice), [data?.openInvoices, selectedInvoice])
+  const invoiceOptions = (data?.openInvoices ?? []).map((item) => ({
+    label: (
+      <Space direction="vertical" size={0}>
+        <Typography.Text strong>{item.tenant_name}</Typography.Text>
+        <Typography.Text type="secondary">
+          {`${item.invoiceNumber} | Due: ${item.dateDue || '-'} | Balance: AED ${item.amountDue.toLocaleString()}`}
+        </Typography.Text>
+      </Space>
+    ),
+    searchText: `${item.tenant_name} ${item.invoiceNumber} ${item.dateDue} ${item.status}`.trim(),
+    value: item.invoiceNumber,
+  }))
   const mutation = useMutation({
     mutationFn: (values: CreatePaymentValues) => {
       const matchedInvoice = (data?.openInvoices ?? []).find((item) => item.invoiceNumber === values.invoiceNumber)
@@ -37,5 +49,5 @@ export function CreatePaymentPage() {
     onError: (err: unknown) => { setMessage(''); setError(getApiErrorMessage(err, 'Payment could not be saved.')) },
   })
   if (isLoading) return <Card><div className="page-loader"><Spin size="large" /></div></Card>
-  return <div className="page-stack"><PageHeader title="Create Payment" subtitle="Apply a payment against an unpaid or partially paid invoice." breadcrumbs={[{ title: 'Dashboard' }, { title: 'Create Payment' }]} /><Card>{message ? <Alert type="success" showIcon message={message} style={{ marginBottom: 16 }} /> : null}{error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}<Form<CreatePaymentValues> layout="vertical" onFinish={(values) => mutation.mutate(values)}><Form.Item label="Invoice / Tenant" name="invoiceNumber" rules={[{ required: true }]}><Select onChange={(value) => setSelectedInvoice(value)} options={(data?.openInvoices ?? []).map((item) => ({ label: `${item.tenant_name} (${item.invoiceNumber})`, value: item.invoiceNumber }))} /></Form.Item>{invoice ? <Card size="small" style={{ marginBottom: 16 }}><Typography.Text>Tenant ID: {invoice.tenantID}</Typography.Text><br /><Typography.Text>Expected Amount: AED {invoice.amountDue.toLocaleString()}</Typography.Text><br /><Typography.Text>Due Date: {invoice.dateDue || '-'}</Typography.Text></Card> : null}<Form.Item label="Amount Paid" name="paidAmount" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item><Form.Item label="MPESA Code" name="mpesa"><Input /></Form.Item><Form.Item label="Comment" name="comment" rules={[{ required: true }]}><Input.TextArea rows={4} /></Form.Item><Button htmlType="submit" loading={mutation.isPending} type="primary">Update this Payment</Button></Form></Card></div>
+  return <div className="page-stack"><PageHeader title="Create Payment" subtitle="Apply a payment against an unpaid or partially paid invoice." breadcrumbs={[{ title: 'Dashboard' }, { title: 'Create Payment' }]} /><Card>{message ? <Alert type="success" showIcon message={message} style={{ marginBottom: 16 }} /> : null}{error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}<Form<CreatePaymentValues> layout="vertical" onFinish={(values) => mutation.mutate(values)}><Form.Item label="Invoice / Tenant" name="invoiceNumber" rules={[{ required: true }]}><Select showSearch optionFilterProp="searchText" onChange={(value) => setSelectedInvoice(value)} options={invoiceOptions} placeholder="Select invoice / tenant" notFoundContent="No unpaid invoices available" /></Form.Item>{invoice ? <Card size="small" style={{ marginBottom: 16 }}><Typography.Text>Tenant ID: {invoice.tenantID}</Typography.Text><br /><Typography.Text>Expected Amount: AED {invoice.amountDue.toLocaleString()}</Typography.Text><br /><Typography.Text>Due Date: {invoice.dateDue || '-'}</Typography.Text></Card> : null}<Form.Item label="Amount Paid" name="paidAmount" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item><Form.Item label="MPESA Code" name="mpesa"><Input /></Form.Item><Form.Item label="Comment" name="comment" rules={[{ required: true }]}><Input.TextArea rows={4} /></Form.Item><Button htmlType="submit" loading={mutation.isPending} type="primary">Update this Payment</Button></Form></Card></div>
 }

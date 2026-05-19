@@ -36,7 +36,7 @@ export function SubscribersPage() {
     <div className="page-stack">
       <PageHeader
         title="Subscribers"
-        subtitle="Newsletter/contact subscribers from the PHP admin export table."
+        subtitle="Newsletter/contact subscribers from the local database."
         breadcrumbs={[{ title: 'Dashboard' }, { title: 'Subscribers' }]}
       />
       <Card>

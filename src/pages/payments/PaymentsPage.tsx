@@ -63,22 +63,26 @@ export function PaymentsPage() {
       key: 'documents',
       render: (_, record) => (
         <Space wrap>
-          <Button
-            href={record.invoice_pdf_url}
-            icon={<FileTextOutlined />}
-            size="small"
-            target="_blank"
-          >
-            Invoice PDF
-          </Button>
-          <Button
-            href={record.receipt_pdf_url}
-            icon={<FilePdfOutlined />}
-            size="small"
-            target="_blank"
-          >
-            Receipt PDF
-          </Button>
+          {record.invoice_pdf_url ? (
+            <Button
+              href={record.invoice_pdf_url}
+              icon={<FileTextOutlined />}
+              size="small"
+              target="_blank"
+            >
+              Invoice PDF
+            </Button>
+          ) : null}
+          {record.receipt_pdf_url ? (
+            <Button
+              href={record.receipt_pdf_url}
+              icon={<FilePdfOutlined />}
+              size="small"
+              target="_blank"
+            >
+              Receipt PDF
+            </Button>
+          ) : null}
           <Button
             icon={<SendOutlined />}
             loading={telegramMutation.isPending && telegramMutation.variables === record.paymentID}
@@ -133,7 +137,7 @@ export function PaymentsPage() {
     <div className="page-stack">
       <PageHeader
         title="Payments"
-        subtitle="Payment history from the current backend with the important columns surfaced first."
+        subtitle="Payment history from the local Node backend with the important columns surfaced first."
         breadcrumbs={[{ title: 'Dashboard' }, { title: 'Payments' }]}
         extra={
           <Button

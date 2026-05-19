@@ -1,4 +1,5 @@
 import {
+  PlusCircleOutlined,
   CameraOutlined,
   EnvironmentOutlined,
   PlusOutlined,
@@ -10,12 +11,15 @@ import {
   Card,
   Col,
   Empty,
+  Image,
+  Modal,
   Row,
   Space,
   Spin,
   Tag,
   Typography,
 } from 'antd'
+import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { http } from '../../lib/http'
@@ -31,7 +35,15 @@ function partitionStatusColor(status: string) {
   return status.toLowerCase() === 'vacant' ? 'green' : 'blue'
 }
 
-function PartitionCard({ partition }: { partition: Partition }) {
+function PartitionCard({
+  partition,
+  onPreview,
+  onAddTenant,
+}: {
+  partition: Partition
+  onPreview: (title: string, images: string[]) => void
+  onAddTenant: (partition: Partition) => void
+}) {
   return (
     <Card className="partition-card">
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
@@ -52,9 +64,19 @@ function PartitionCard({ partition }: { partition: Partition }) {
         <Space wrap size="small">
           <Tag icon={<EnvironmentOutlined />}>{partition.location || 'No location'}</Tag>
           <Tag color="gold">AED {partition.rent_amount.toLocaleString()}</Tag>
-          <Tag icon={<CameraOutlined />} color={partition.photo_count > 0 ? 'processing' : 'default'}>
-            {partition.photo_count} photos
-          </Tag>
+          {partition.photo_count > 0 ? (
+            <Button
+              icon={<CameraOutlined />}
+              onClick={() => onPreview(`${partition.house_name} / ${partition.partition_number} photos`, partition.photo_urls)}
+              size="small"
+            >
+              {partition.photo_count} photos
+            </Button>
+          ) : (
+            <Tag icon={<CameraOutlined />} color="default">
+              0 photos
+            </Tag>
+          )}
         </Space>
 
         {partition.description ? (
@@ -76,6 +98,12 @@ function PartitionCard({ partition }: { partition: Partition }) {
             <Typography.Text type="secondary">No facilities added.</Typography.Text>
           )}
         </Space>
+
+        <Space wrap>
+          <Button onClick={() => onAddTenant(partition)} type="primary">
+            Add Tenant
+          </Button>
+        </Space>
       </Space>
     </Card>
   )
@@ -83,6 +111,8 @@ function PartitionCard({ partition }: { partition: Partition }) {
 
 export function PartitionsPage() {
   const navigate = useNavigate()
+  const [previewTitle, setPreviewTitle] = useState('')
+  const [previewImages, setPreviewImages] = useState<string[]>([])
   const [searchParams] = useSearchParams()
   const houseId = searchParams.get('house_id')
   const { data, isLoading, isError } = useQuery({
@@ -97,15 +127,23 @@ export function PartitionsPage() {
         subtitle="Vacant partitions are listed first, matching the current PHP admin behavior."
         breadcrumbs={[{ title: 'Dashboard' }, { title: 'Partitions' }]}
         extra={
-          <Button
-            icon={<PlusOutlined />}
-            onClick={() =>
-              navigate(`/create/partition${houseId ? `?house_id=${encodeURIComponent(houseId)}` : ''}`)
-            }
-            type="primary"
-          >
-            Add Partition
-          </Button>
+          <Space wrap>
+            <Button
+              icon={<PlusCircleOutlined />}
+              onClick={() => navigate('/create/tenant')}
+            >
+              Add Tenant
+            </Button>
+            <Button
+              icon={<PlusOutlined />}
+              onClick={() =>
+                navigate(`/create/partition${houseId ? `?house_id=${encodeURIComponent(houseId)}` : ''}`)
+              }
+              type="primary"
+            >
+              Add Partition
+            </Button>
+          </Space>
         }
       />
 
@@ -125,11 +163,41 @@ export function PartitionsPage() {
         <Row gutter={[18, 18]}>
           {data.items.map((partition) => (
             <Col key={partition.partition_id} xs={24} md={12} xl={8}>
-              <PartitionCard partition={partition} />
+              <PartitionCard
+                onAddTenant={(partition) =>
+                  navigate(`/create/tenant?house_id=${encodeURIComponent(String(partition.house_id))}&partition_id=${encodeURIComponent(String(partition.partition_id))}`)
+                }
+                onPreview={(title, images) => {
+                  setPreviewTitle(title)
+                  setPreviewImages(images)
+                }}
+                partition={partition}
+              />
             </Col>
           ))}
         </Row>
       )}
+
+      <Modal
+        footer={null}
+        onCancel={() => setPreviewImages([])}
+        open={previewImages.length > 0}
+        title={previewTitle}
+        width={900}
+      >
+        <Image.PreviewGroup>
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            {previewImages.map((imageUrl) => (
+              <Image
+                alt={previewTitle}
+                key={imageUrl}
+                src={imageUrl}
+                style={{ borderRadius: 12, width: '100%' }}
+              />
+            ))}
+          </Space>
+        </Image.PreviewGroup>
+      </Modal>
     </div>
   )
 }

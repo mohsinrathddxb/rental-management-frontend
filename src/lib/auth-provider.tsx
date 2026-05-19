@@ -4,7 +4,7 @@ import { http } from './http'
 import type { AuthUser, LoginResponse, SessionResponse } from './types'
 
 type LoginPayload = {
-  email: string
+  identifier: string
   password: string
 }
 
@@ -57,7 +57,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [])
 
   const login = async (payload: LoginPayload) => {
-    const { data } = await http.post<LoginResponse>('/auth/login.php', payload)
+    const identifier = payload.identifier.trim()
+    const { data } = await http.post<LoginResponse>('/auth/login.php', {
+      email: identifier,
+      uname: identifier,
+      password: payload.password,
+    })
     setUser(data.user)
     return data.user
   }

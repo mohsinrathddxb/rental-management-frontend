@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { Alert, Button, Card, Form, Input, Select, Space, Spin } from 'antd'
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { getApiErrorMessage } from '../../lib/api-errors'
 import { http } from '../../lib/http'
@@ -31,10 +31,13 @@ type CreateTenantValues = {
 
 export function CreateTenantPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { data, isLoading } = useFormOptions()
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [houseValue, setHouseValue] = useState<string>('')
+  const initialHouseValue = searchParams.get('house_id') ?? ''
+  const initialPartitionId = searchParams.get('partition_id')
+  const [houseValue, setHouseValue] = useState<string>(initialHouseValue)
   const mutation = useMutation({
     mutationFn: (values: CreateTenantValues) => http.post('/create/tenant.php', values),
     onSuccess: () => {
@@ -49,7 +52,7 @@ export function CreateTenantPage() {
   })
 
   const partitionOptions = useMemo(() => {
-    const houseId = Number((houseValue || '').split('_')[0] || 0)
+    const houseId = Number(houseValue || 0)
     return (data?.partitions ?? []).filter((partition) => partition.house_id === houseId)
   }, [data?.partitions, houseValue])
 
@@ -61,8 +64,8 @@ export function CreateTenantPage() {
       <Card>
         {message ? <Alert type="success" showIcon message={message} style={{ marginBottom: 16 }} /> : null}
         {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
-        <Form<CreateTenantValues> layout="vertical" onFinish={(values) => mutation.mutate(values)} initialValues={{ tenants: [{ phone_code: data?.defaultPhoneCode, tenant_country: data?.defaultCountry }] }}>
-          <Form.Item label="House" name="house" rules={[{ required: true }]}><Select onChange={(value) => setHouseValue(value)} options={(data?.houses ?? []).map((house) => ({ label: house.house_name, value: `${house.houseID}_${house.number_of_rooms}` }))} /></Form.Item>
+        <Form<CreateTenantValues> layout="vertical" onFinish={(values) => mutation.mutate(values)} initialValues={{ house: initialHouseValue || undefined, partition_id: initialPartitionId ? Number(initialPartitionId) : undefined, tenants: [{ phone_code: data?.defaultPhoneCode, tenant_country: data?.defaultCountry }] }}>
+          <Form.Item label="House" name="house" rules={[{ required: true }]}><Select onChange={(value) => setHouseValue(String(value))} options={(data?.houses ?? []).map((house) => ({ label: house.house_name, value: String(house.houseID) }))} /></Form.Item>
           <Form.Item label="Partition" name="partition_id" rules={[{ required: true }]}><Select options={partitionOptions.map((partition) => ({ label: `${partition.house_name} - ${partition.partition_number} (Rent: ${partition.rent_amount}, ${partition.partition_status})`, value: partition.partition_id }))} /></Form.Item>
           <Form.List name="tenants">
             {(fields, { add, remove }) => (

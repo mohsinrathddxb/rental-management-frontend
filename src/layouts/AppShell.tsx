@@ -7,6 +7,7 @@ import {
   EnvironmentOutlined,
   FileDoneOutlined,
   FileTextOutlined,
+  ScheduleOutlined,
   MailOutlined,
   NotificationOutlined,
   LogoutOutlined,
@@ -74,6 +75,8 @@ function getMenuState(pathname: string) {
     '/payments': 'payments',
     '/create/expense': 'expenses',
     '/expenses': 'expenses',
+    '/create/cheque': 'cheques',
+    '/cheques': 'cheques',
     '/posts': 'blog',
     '/create/post': 'blog',
     '/comments': 'blog',
@@ -102,17 +105,18 @@ function buildMenuItems(isAdmin: boolean, isTenant: boolean, onNavigate?: () => 
   if (isAdmin) {
     housesChildren.push(
       menuItem('/create/house', navLink('/create/house', 'Add a House', onNavigate)),
+      menuItem('/create/partition', navLink('/create/partition', 'Add Partition', onNavigate)),
     )
   }
 
   housesChildren.push(
     menuItem(
-      '/partitions',
-      navLink('/partitions', isAdmin ? 'Add Partition' : 'View Partitions', onNavigate),
-    ),
-    menuItem(
       '/houses',
       navLink('/houses', isTenant ? 'Available Partitions' : 'View Houses', onNavigate),
+    ),
+    menuItem(
+      '/partitions',
+      navLink('/partitions', 'View Partitions', onNavigate),
     ),
   )
 
@@ -155,6 +159,10 @@ function buildMenuItems(isAdmin: boolean, isTenant: boolean, onNavigate?: () => 
       menuItem('expenses', 'Expenses', <BuildOutlined />, [
         menuItem('/create/expense', navLink('/create/expense', 'Add Expense', onNavigate)),
         menuItem('/expenses', navLink('/expenses', 'View Expenses', onNavigate)),
+      ]),
+      menuItem('cheques', 'Cheques', <ScheduleOutlined />, [
+        menuItem('/create/cheque', navLink('/create/cheque', 'Create Cheque Plan', onNavigate)),
+        menuItem('/cheques', navLink('/cheques', 'Track Cheques', onNavigate)),
       ]),
       menuItem('/reports', navLink('/reports', 'Reports', onNavigate), <FileDoneOutlined />),
     )

@@ -82,14 +82,16 @@ export function InvoicesPage() {
       key: 'documents',
       render: (_, record) => (
         <Space wrap>
-          <Button
-            href={record.invoice_pdf_url}
-            icon={<FileTextOutlined />}
-            size="small"
-            target="_blank"
-          >
-            Invoice PDF
-          </Button>
+          {record.invoice_pdf_url ? (
+            <Button
+              href={record.invoice_pdf_url}
+              icon={<FileTextOutlined />}
+              size="small"
+              target="_blank"
+            >
+              Invoice PDF
+            </Button>
+          ) : null}
           {record.receipt_pdf_url ? (
             <Button
               href={record.receipt_pdf_url}
@@ -144,7 +146,7 @@ export function InvoicesPage() {
     <div className="page-stack">
       <PageHeader
         title="Invoices"
-        subtitle="The same invoice ordering and status logic, now presented in Ant Design."
+        subtitle="Invoice ordering and status logic from the local Node backend."
         breadcrumbs={[{ title: 'Dashboard' }, { title: 'Invoices' }]}
         extra={
           data?.canManage ? (

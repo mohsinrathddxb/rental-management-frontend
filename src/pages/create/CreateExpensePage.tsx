@@ -26,7 +26,7 @@ export function CreateExpensePage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [houseId, setHouseId] = useState<number | null>(null)
-  const partitions = useMemo(() => (data?.partitions ?? []).filter((partition) => !houseId || partition.house_id === houseId), [data?.partitions, houseId])
+  const partitions = useMemo(() => (data?.expense_partitions ?? []).filter((partition) => !houseId || partition.house_id === houseId), [data?.expense_partitions, houseId])
   const mutation = useMutation({
     mutationFn: async (values: CreateExpenseValues) => {
       const formData = new FormData()

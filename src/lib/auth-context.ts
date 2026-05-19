@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react'
 import type { AuthUser } from './types'
 
 type LoginPayload = {
-  email: string
+  identifier: string
   password: string
 }
 

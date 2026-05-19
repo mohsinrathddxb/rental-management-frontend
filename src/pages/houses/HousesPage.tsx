@@ -3,9 +3,10 @@ import {
   CameraOutlined,
   HomeOutlined,
 } from '@ant-design/icons'
-import { Alert, Button, Card, Space, Spin, Table, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Image, Modal, Space, Spin, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { http } from '../../lib/http'
@@ -25,6 +26,8 @@ function statusColor(status: string) {
 
 export function HousesPage() {
   const navigate = useNavigate()
+  const [previewTitle, setPreviewTitle] = useState('')
+  const [previewImages, setPreviewImages] = useState<string[]>([])
   const { data, isLoading, isError } = useQuery({
     queryKey: ['houses'],
     queryFn: fetchHouses,
@@ -85,11 +88,23 @@ export function HousesPage() {
       title: 'Photos',
       dataIndex: 'photo_count',
       key: 'photo_count',
-      render: (value: number) => (
-        <Tag icon={<CameraOutlined />} color={value > 0 ? 'processing' : 'default'}>
-          {value}
-        </Tag>
-      ),
+      render: (value: number, record) =>
+        value > 0 ? (
+          <Button
+            icon={<CameraOutlined />}
+            onClick={() => {
+              setPreviewTitle(`${record.house_name} photos`)
+              setPreviewImages(record.photo_urls)
+            }}
+            size="small"
+          >
+            {value} photos
+          </Button>
+        ) : (
+          <Tag icon={<CameraOutlined />} color="default">
+            0
+          </Tag>
+        ),
     },
     {
       title: 'Actions',
@@ -139,6 +154,27 @@ export function HousesPage() {
           />
         )}
       </Card>
+
+      <Modal
+        footer={null}
+        onCancel={() => setPreviewImages([])}
+        open={previewImages.length > 0}
+        title={previewTitle}
+        width={900}
+      >
+        <Image.PreviewGroup>
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            {previewImages.map((imageUrl) => (
+              <Image
+                alt={previewTitle}
+                key={imageUrl}
+                src={imageUrl}
+                style={{ borderRadius: 12, width: '100%' }}
+              />
+            ))}
+          </Space>
+        </Image.PreviewGroup>
+      </Modal>
     </div>
   )
 }

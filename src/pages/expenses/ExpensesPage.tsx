@@ -5,7 +5,7 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
-import { http } from '../../lib/http'
+import { assetBaseURL, http } from '../../lib/http'
 import type { Expense, ExpensesResponse } from '../../lib/types'
 
 async function fetchExpenses(month: string | null, category: string | null) {
@@ -41,7 +41,7 @@ export function ExpensesPage() {
       render: (_, record) =>
         record.attachment_path ? (
           <Button
-            href={`http://localhost/Rental-house-management-system/admin/${record.attachment_path}`}
+            href={`${assetBaseURL}/${record.attachment_path.replace(/^\/+/, '')}`}
             icon={record.is_image_attachment ? <FileImageOutlined /> : <FilePdfOutlined />}
             size="small"
             target="_blank"

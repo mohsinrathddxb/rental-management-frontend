@@ -55,7 +55,7 @@ export function MessagesPage() {
     <div className="page-stack">
       <PageHeader
         title="Messages"
-        subtitle="Recent contact form messages from the PHP admin inbox."
+        subtitle="Recent contact form messages from the local admin inbox."
         breadcrumbs={[{ title: 'Dashboard' }, { title: 'Messages' }]}
       />
       <Card>

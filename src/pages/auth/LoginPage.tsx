@@ -6,7 +6,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/auth-context'
 
 type LoginFormValues = {
-  email: string
+  identifier: string
   password: string
 }
 
@@ -51,8 +51,8 @@ export function LoginPage() {
             Sign in to the React rental frontend
           </Typography.Title>
           <Typography.Paragraph>
-            Admins and tenants both use the current PHP backend while we migrate
-            the frontend page by page.
+            Admins and tenants both use the local Node backend backed by your
+            MySQL rental database.
           </Typography.Paragraph>
         </div>
 
@@ -76,13 +76,13 @@ export function LoginPage() {
           ) : null}
           <Form<LoginFormValues> layout="vertical" onFinish={handleFinish}>
             <Form.Item
-              label="Email"
-              name="email"
-              rules={[{ required: true, message: 'Please enter your email.' }]}
+              label="Email or Username"
+              name="identifier"
+              rules={[{ required: true, message: 'Please enter your email or username.' }]}
             >
               <Input
                 prefix={<MailOutlined />}
-                placeholder="you@example.com"
+                placeholder="you@example.com or your username"
                 size="large"
               />
             </Form.Item>

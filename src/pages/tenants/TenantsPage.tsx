@@ -10,7 +10,7 @@ import { Alert, Button, Card, Space, Spin, Table, Tag, Typography, message } fro
 import type { ColumnsType } from 'antd/es/table'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
-import { http } from '../../lib/http'
+import { assetBaseURL, http } from '../../lib/http'
 import type { TelegramActionResponse, Tenant, TenantsResponse } from '../../lib/types'
 
 async function fetchTenants() {
@@ -166,7 +166,7 @@ export function TenantsPage() {
       render: (_, record) =>
         record.agreement_file ? (
           <Button
-            href={`http://localhost/Rental-house-management-system/admin/uploads/agreements/${record.agreement_file}`}
+            href={`${assetBaseURL}/uploads/agreements/${record.agreement_file}`}
             icon={<FileTextOutlined />}
             target="_blank"
           >
@@ -182,7 +182,7 @@ export function TenantsPage() {
     <div className="page-stack">
       <PageHeader
         title="Tenants"
-        subtitle="Active tenants from the current backend, now rendered with Ant Design."
+        subtitle="Active tenants from the local Node backend, now rendered with Ant Design."
         breadcrumbs={[{ title: 'Dashboard' }, { title: 'Tenants' }]}
         extra={
           <Button

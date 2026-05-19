@@ -62,6 +62,7 @@ export type House = {
   partition_count: number
   available_partition_count: number
   photo_count: number
+  photo_urls: string[]
   partitions_url: string
 }
 
@@ -82,6 +83,7 @@ export type Partition = {
   description: string
   facilities: string[]
   photo_count: number
+  photo_urls: string[]
 }
 
 export type PartitionsResponse = {
@@ -267,6 +269,56 @@ export type ExpensesResponse = {
   items: Expense[]
 }
 
+export type LandlordCheque = {
+  cheque_id: number
+  house_id: number
+  house_name: string
+  payee_name: string
+  frequency: string
+  installment_number: number
+  total_installments: number
+  amount: number
+  due_date: string
+  original_due_date: string
+  status: string
+  notes: string
+  reschedule_note: string
+  reschedule_count: number
+  paid_amount: number
+  paid_date: string
+  payment_reference: string
+  paid_note: string
+  created_by_name: string
+  updated_at: string
+  created_at: string
+}
+
+export type LandlordChequeEvent = {
+  event_id: number
+  cheque_id: number
+  event_type: string
+  actor_name: string
+  note: string
+  metadata_json: string
+  created_at: string
+}
+
+export type ChequesResponse = {
+  ok: boolean
+  summary: {
+    total_remaining_amount: number
+    total_paid_amount: number
+    total_coming_amount: number
+    remaining_count: number
+    coming_count: number
+    paid_count: number
+  }
+  coming: LandlordCheque[]
+  remaining: LandlordCheque[]
+  paid: LandlordCheque[]
+  events: LandlordChequeEvent[]
+}
+
 export type ReportBreakdown = {
   category: string
   total: number
@@ -436,10 +488,20 @@ export type FormOptionsResponse = {
     partition_status: string
     house_name: string
   }>
+  expense_partitions: Array<{
+    partition_id: number
+    house_id: number
+    partition_number: string
+    rent_amount: number
+    partition_status: string
+    house_name: string
+  }>
   activeTenants: Array<{
     tenantID: number
     tenant_name: string
     email: string
+    house_name: string
+    partition_number: string
     rent_amount: number
   }>
   openInvoices: Array<{

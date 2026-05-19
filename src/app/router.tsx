@@ -33,9 +33,11 @@ import { CreateTenantPage } from '../pages/create/CreateTenantPage'
 import { CreateInvoicePage } from '../pages/create/CreateInvoicePage'
 import { CreatePaymentPage } from '../pages/create/CreatePaymentPage'
 import { CreateExpensePage } from '../pages/create/CreateExpensePage'
+import { CreateChequePage } from '../pages/create/CreateChequePage'
 import { CreatePostPage } from '../pages/create/CreatePostPage'
 import { CreateUserPage } from '../pages/create/CreateUserPage'
 import { CreateLocationPage } from '../pages/create/CreateLocationPage'
+import { ChequesPage } from '../pages/cheques/ChequesPage'
 
 function ProtectedRoutes() {
   const { isLoading, isAuthenticated } = useAuth()
@@ -131,6 +133,7 @@ export function AppRouter() {
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/payments" element={<AdminOnlyRoute><PaymentsPage /></AdminOnlyRoute>} />
           <Route path="/expenses" element={<AdminOnlyRoute><ExpensesPage /></AdminOnlyRoute>} />
+          <Route path="/cheques" element={<AdminOnlyRoute><ChequesPage /></AdminOnlyRoute>} />
           <Route path="/reports" element={<AdminOnlyRoute><ReportsPage /></AdminOnlyRoute>} />
           <Route path="/notices" element={<NoticesPage />} />
           <Route path="/complaints" element={<ComplaintsPage />} />
@@ -149,6 +152,7 @@ export function AppRouter() {
           <Route path="/create/invoice" element={<AdminOnlyRoute><CreateInvoicePage /></AdminOnlyRoute>} />
           <Route path="/create/payment" element={<AdminOnlyRoute><CreatePaymentPage /></AdminOnlyRoute>} />
           <Route path="/create/expense" element={<AdminOnlyRoute><CreateExpensePage /></AdminOnlyRoute>} />
+          <Route path="/create/cheque" element={<AdminOnlyRoute><CreateChequePage /></AdminOnlyRoute>} />
           <Route path="/create/post" element={<AdminOnlyRoute><CreatePostPage /></AdminOnlyRoute>} />
           <Route path="/create/user" element={<AdminOnlyRoute><CreateUserPage /></AdminOnlyRoute>} />
           <Route path="/create/location" element={<AdminOnlyRoute><CreateLocationPage /></AdminOnlyRoute>} />

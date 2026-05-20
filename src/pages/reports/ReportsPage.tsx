@@ -1,11 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Card, Col, Row, Spin, Table, Typography } from 'antd'
+import { Alert, Card, Col, Row, Spin, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { http } from '../../lib/http'
-import type { ReportBreakdown, ReportPartition, ReportsResponse, ReportRoom } from '../../lib/types'
+import type {
+  ReportBreakdown,
+  ReportHouse,
+  ReportPartition,
+  ReportsResponse,
+  ReportTenantCollection,
+} from '../../lib/types'
 
 async function fetchReports(month: string | null, year: string | null, quarter: string | null) {
   const params = new URLSearchParams()
@@ -30,10 +36,24 @@ export function ReportsPage() {
     { title: 'Category', dataIndex: 'category', key: 'category' },
     { title: 'Total', dataIndex: 'total', key: 'total', render: (v: number) => `AED ${v.toLocaleString()}` },
   ]
-  const roomColumns: ColumnsType<ReportRoom> = [
+  const houseColumns: ColumnsType<ReportHouse> = [
     { title: 'House', dataIndex: 'house_name', key: 'house_name' },
-    { title: 'Partition', dataIndex: 'partition_number', key: 'partition_number' },
-    { title: 'Tenant', dataIndex: 'tenant_name', key: 'tenant_name' },
+    {
+      title: 'Current Status',
+      key: 'payment_status_label',
+      render: (_, record) => {
+        if (record.payment_status_label === 'Due') {
+          return <Tag color="error">Due: AED {record.payment_status_amount.toLocaleString()}</Tag>
+        }
+        if (record.payment_status_label === 'Advance') {
+          return <Tag color="processing">Advance: AED {record.payment_status_amount.toLocaleString()}</Tag>
+        }
+        if (record.payment_status_label === 'Fully Paid') {
+          return <Tag color="success">Fully Paid</Tag>
+        }
+        return <Tag color="success">Up to Date</Tag>
+      },
+    },
     { title: 'Rent Collected', dataIndex: 'rent_collected', key: 'rent_collected', render: (v: number) => `AED ${v.toLocaleString()}` },
     { title: 'Direct Expenses', dataIndex: 'direct_expenses', key: 'direct_expenses', render: (v: number) => `AED ${v.toLocaleString()}` },
     { title: 'Net Earning', dataIndex: 'net_earning', key: 'net_earning', render: (v: number) => `AED ${v.toLocaleString()}` },
@@ -45,6 +65,30 @@ export function ReportsPage() {
     { title: 'Rent Collected', dataIndex: 'rent_collected', key: 'rent_collected', render: (v: number) => `AED ${v.toLocaleString()}` },
     { title: 'Direct Expenses', dataIndex: 'direct_expenses', key: 'direct_expenses', render: (v: number) => `AED ${v.toLocaleString()}` },
     { title: 'Net Earning', dataIndex: 'net_earning', key: 'net_earning', render: (v: number) => `AED ${v.toLocaleString()}` },
+  ]
+  const tenantCollectionColumns: ColumnsType<ReportTenantCollection> = [
+    { title: 'Tenant', dataIndex: 'tenant_name', key: 'tenant_name' },
+    { title: 'Email', dataIndex: 'email', key: 'email', render: (v: string) => v || '-' },
+    { title: 'House', dataIndex: 'house_name', key: 'house_name', render: (v: string) => v || '-' },
+    { title: 'Partition', dataIndex: 'partition_number', key: 'partition_number', render: (v: string) => v || '-' },
+    {
+      title: 'Current Status',
+      key: 'payment_status_label',
+      render: (_, record) => {
+        if (record.payment_status_label === 'Due') {
+          return <Tag color="error">Due: AED {record.payment_status_amount.toLocaleString()}</Tag>
+        }
+        if (record.payment_status_label === 'Advance') {
+          return <Tag color="processing">Advance: AED {record.payment_status_amount.toLocaleString()}</Tag>
+        }
+        if (record.payment_status_label === 'Fully Paid') {
+          return <Tag color="success">Fully Paid</Tag>
+        }
+        return <Tag color="success">Up to Date</Tag>
+      },
+    },
+    { title: 'Payments', dataIndex: 'payment_count', key: 'payment_count' },
+    { title: 'Collection', dataIndex: 'rent_collected', key: 'rent_collected', render: (v: number) => `AED ${v.toLocaleString()}` },
   ]
 
   return (
@@ -63,7 +107,8 @@ export function ReportsPage() {
               <Col xs={24} lg={12}><Card><Typography.Title level={4}>Quarterly Report</Typography.Title><Typography.Paragraph>{data.quarterly.start} to {data.quarterly.end}</Typography.Paragraph><Typography.Paragraph>Rent: AED {data.quarterly.rent_collected.toLocaleString()}</Typography.Paragraph><Typography.Paragraph>Expenses: AED {data.quarterly.total_expenses.toLocaleString()}</Typography.Paragraph><Typography.Title level={5}>Net: AED {data.quarterly.net_earning.toLocaleString()}</Typography.Title></Card></Col>
             </Row>
             <Card title="Expense Breakdown"><Table columns={breakdownColumns} dataSource={data.expenseBreakdown} rowKey="category" pagination={false} /></Card>
-            <Card title="Room-wise Actual Earnings"><Table columns={roomColumns} dataSource={data.roomReport} rowKey={(r) => `${r.tenantID}-${r.partition_id}`} scroll={{ x: 1000 }} pagination={{ pageSize: 8, showSizeChanger: false }} /></Card>
+            <Card title="Tenant-wise Collection"><Table columns={tenantCollectionColumns} dataSource={data.tenantCollectionReport} rowKey="tenantID" scroll={{ x: 1000 }} pagination={{ pageSize: 8, showSizeChanger: false }} /></Card>
+            <Card title="House-wise Collection"><Table columns={houseColumns} dataSource={data.houseReport} rowKey="houseID" scroll={{ x: 1000 }} pagination={{ pageSize: 8, showSizeChanger: false }} /></Card>
             <Card title="Partition-wise Actual Earnings"><Table columns={partitionColumns} dataSource={data.partitionReport} rowKey="partition_id" scroll={{ x: 1000 }} pagination={{ pageSize: 8, showSizeChanger: false }} /></Card>
           </div>
         )}

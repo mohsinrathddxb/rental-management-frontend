@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Card, Form, Input, Select, Space, Spin } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -31,6 +31,7 @@ type CreateTenantValues = {
 
 export function CreateTenantPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
   const { data, isLoading } = useFormOptions()
   const [message, setMessage] = useState('')
@@ -40,7 +41,13 @@ export function CreateTenantPage() {
   const [houseValue, setHouseValue] = useState<string>(initialHouseValue)
   const mutation = useMutation({
     mutationFn: (values: CreateTenantValues) => http.post('/create/tenant.php', values),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['form-options'] }),
+        queryClient.invalidateQueries({ queryKey: ['tenants'] }),
+        queryClient.invalidateQueries({ queryKey: ['houses'] }),
+        queryClient.invalidateQueries({ queryKey: ['partitions'] }),
+      ])
       setError('')
       setMessage('Tenant saved successfully.')
       setTimeout(() => navigate('/tenants'), 600)

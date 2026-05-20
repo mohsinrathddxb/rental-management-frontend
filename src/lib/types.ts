@@ -111,6 +111,7 @@ export type Tenant = {
   agreement_file: string
   house_name: string
   houseID: number
+  partition_id: number
   partition_number: string
   rent_amount: number
 }
@@ -142,6 +143,12 @@ export type Invoice = {
   phone_number: string
   tenantID: number
   amountDue: number
+  rent_amount: number
+  deposit_amount: number
+  credit_applied: number
+  total_paid: number
+  rent_due_amount: number
+  deposit_due_amount: number
   total_amount: number
   dateOfInvoice: string
   dateDue: string
@@ -324,15 +331,17 @@ export type ReportBreakdown = {
   total: number
 }
 
-export type ReportRoom = {
-  tenantID: number
-  tenant_name: string
+export type ReportHouse = {
+  houseID: number
   house_name: string
-  partition_id: number
-  partition_number: string
   rent_collected: number
   direct_expenses: number
   net_earning: number
+  current_due_amount: number
+  advance_amount: number
+  invoice_count: number
+  payment_status_label: string
+  payment_status_amount: number
 }
 
 export type ReportPartition = {
@@ -343,6 +352,21 @@ export type ReportPartition = {
   rent_collected: number
   direct_expenses: number
   net_earning: number
+}
+
+export type ReportTenantCollection = {
+  tenantID: number
+  tenant_name: string
+  email: string
+  house_name: string
+  partition_number: string
+  rent_collected: number
+  payment_count: number
+  current_due_amount: number
+  advance_amount: number
+  invoice_count: number
+  payment_status_label: string
+  payment_status_amount: number
 }
 
 export type ReportsResponse = {
@@ -369,8 +393,9 @@ export type ReportsResponse = {
     net_earning: number
   }
   expenseBreakdown: ReportBreakdown[]
-  roomReport: ReportRoom[]
+  houseReport: ReportHouse[]
   partitionReport: ReportPartition[]
+  tenantCollectionReport: ReportTenantCollection[]
 }
 
 export type DeletedTenant = {
@@ -509,6 +534,12 @@ export type FormOptionsResponse = {
     tenantID: number
     tenant_name: string
     amountDue: number
+    rent_amount: number
+    deposit_amount: number
+    credit_applied: number
+    total_paid: number
+    rent_due_amount: number
+    deposit_due_amount: number
     dateDue: string
     status: string
   }>

@@ -30,7 +30,7 @@ The React app talks to JSON endpoints under:
 ## Setup
 
 1. Copy `.env.example` to `.env`
-2. Confirm the PHP app is running at:
+2. Confirm the PHP app is running in XAMPP at:
    `http://localhost/Rental-house-management-system`
 3. Install dependencies:
 
@@ -48,13 +48,20 @@ Default Vite URL:
 
 `http://localhost:5173`
 
-## API base URL
+## Local XAMPP config
 
-Set in `.env`:
+Use this `.env` for the PHP backend in XAMPP:
 
 ```bash
-VITE_API_BASE_URL=http://localhost/Rental-house-management-system/api/admin
+VITE_API_BASE_URL=/api/admin
+VITE_PHP_BASE_URL=http://localhost/Rental-house-management-system
 ```
+
+Vite will proxy `/api/admin` and `/uploads` to the PHP app, which keeps session cookies working during local development.
+
+## Optional Node backend config
+
+If you want to test against the separate Node backend instead of XAMPP, copy `.env.node-backend.example` to `.env`.
 
 ## Notes
 

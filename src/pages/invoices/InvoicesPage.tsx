@@ -1,4 +1,5 @@
 import {
+  CreditCardOutlined,
   FilePdfOutlined,
   FileTextOutlined,
   PlusOutlined,
@@ -72,6 +73,12 @@ export function InvoicesPage() {
         <Space direction="vertical" size={0}>
           <Typography.Text strong>AED {record.amountDue.toLocaleString()}</Typography.Text>
           <Typography.Text type="secondary">
+            Deposit due: AED {record.deposit_due_amount.toLocaleString()}
+          </Typography.Text>
+          <Typography.Text type="secondary">
+            Rent remaining: AED {record.rent_due_amount.toLocaleString()}
+          </Typography.Text>
+          <Typography.Text type="secondary">
             Total: AED {record.total_amount.toLocaleString()}
           </Typography.Text>
         </Space>
@@ -100,6 +107,18 @@ export function InvoicesPage() {
               target="_blank"
             >
               Latest Receipt
+            </Button>
+          ) : null}
+          {data?.canManage && record.status.trim().toLowerCase() !== 'paid' ? (
+            <Button
+              icon={<CreditCardOutlined />}
+              onClick={() =>
+                navigate(`/create/payment?invoiceNumber=${encodeURIComponent(record.invoiceNumber)}`)
+              }
+              size="small"
+              type="primary"
+            >
+              Make Payment
             </Button>
           ) : null}
           {data?.canManage ? (
@@ -146,7 +165,7 @@ export function InvoicesPage() {
     <div className="page-stack">
       <PageHeader
         title="Invoices"
-        subtitle="Invoice ordering and status logic from the local Node backend."
+        subtitle="Itemized invoice balances from the local PHP backend."
         breadcrumbs={[{ title: 'Dashboard' }, { title: 'Invoices' }]}
         extra={
           data?.canManage ? (

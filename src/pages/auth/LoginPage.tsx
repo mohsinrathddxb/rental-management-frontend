@@ -51,8 +51,8 @@ export function LoginPage() {
             Sign in to the React rental frontend
           </Typography.Title>
           <Typography.Paragraph>
-            Admins and tenants both use the local Node backend backed by your
-            MySQL rental database.
+            Admins and tenants both use the local PHP backend served through
+            XAMPP and backed by your MySQL rental database.
           </Typography.Paragraph>
         </div>
 

@@ -1,14 +1,17 @@
 import {
   AppstoreOutlined,
   CameraOutlined,
+  DeleteOutlined,
+  EditOutlined,
   HomeOutlined,
 } from '@ant-design/icons'
-import { Alert, Button, Card, Image, Modal, Space, Spin, Table, Tag, Typography } from 'antd'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Alert, Button, Card, Form, Image, Input, InputNumber, Modal, Popconfirm, Select, Space, Spin, Table, Tag, Typography, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
+import { getApiErrorMessage } from '../../lib/api-errors'
 import { http } from '../../lib/http'
 import type { House, HousesResponse } from '../../lib/types'
 
@@ -25,12 +28,51 @@ function statusColor(status: string) {
 }
 
 export function HousesPage() {
+  const [form] = Form.useForm()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [previewTitle, setPreviewTitle] = useState('')
   const [previewImages, setPreviewImages] = useState<string[]>([])
+  const [editingHouse, setEditingHouse] = useState<House | null>(null)
   const { data, isLoading, isError } = useQuery({
     queryKey: ['houses'],
     queryFn: fetchHouses,
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: async (values: any) => {
+      const { data } = await http.post('/manage/house.php', {
+        action: 'update',
+        houseID: editingHouse?.houseID,
+        ...values,
+      })
+      return data
+    },
+    onSuccess: async (response: any) => {
+      message.success(response?.message || 'House updated successfully.')
+      setEditingHouse(null)
+      form.resetFields()
+      await queryClient.invalidateQueries({ queryKey: ['houses'] })
+      await queryClient.invalidateQueries({ queryKey: ['form-options'] })
+    },
+    onError: (error: unknown) => {
+      message.error(getApiErrorMessage(error, 'House could not be updated.'))
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (houseID: number) => {
+      const { data } = await http.post('/manage/house.php', { action: 'delete', houseID })
+      return data
+    },
+    onSuccess: async (response: any) => {
+      message.success(response?.message || 'House deleted successfully.')
+      await queryClient.invalidateQueries({ queryKey: ['houses'] })
+      await queryClient.invalidateQueries({ queryKey: ['form-options'] })
+    },
+    onError: (error: unknown) => {
+      message.error(getApiErrorMessage(error, 'House could not be deleted.'))
+    },
   })
 
   const columns: ColumnsType<House> = [
@@ -94,7 +136,7 @@ export function HousesPage() {
             icon={<CameraOutlined />}
             onClick={() => {
               setPreviewTitle(`${record.house_name} photos`)
-              setPreviewImages(record.photo_urls)
+              setPreviewImages(record.photo_urls ?? [])
             }}
             size="small"
           >
@@ -110,12 +152,45 @@ export function HousesPage() {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
-        <Button
-          icon={<AppstoreOutlined />}
-          onClick={() => navigate(`/partitions?house_id=${encodeURIComponent(String(record.houseID))}`)}
-        >
-          Open Partitions
-        </Button>
+        <Space wrap>
+          <Button
+            icon={<AppstoreOutlined />}
+            onClick={() => navigate(`/partitions?house_id=${encodeURIComponent(String(record.houseID))}`)}
+          >
+            Open Partitions
+          </Button>
+          {data?.canManage ? (
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => {
+                setEditingHouse(record)
+                form.setFieldsValue({
+                  hname: record.house_name,
+                  numOfRooms: record.number_of_rooms,
+                  numOfbRooms: record.num_of_bedrooms,
+                  rent: record.rent_amount,
+                  location: record.location,
+                  status: record.house_status,
+                })
+              }}
+            >
+              Edit
+            </Button>
+          ) : null}
+          {data?.canManage ? (
+            <Popconfirm
+              okButtonProps={{ loading: deleteMutation.isPending }}
+              okText="Delete"
+              onConfirm={() => deleteMutation.mutate(record.houseID)}
+              title="Delete this house?"
+              description="This works only if the house has no active tenants and no partitions."
+            >
+              <Button danger icon={<DeleteOutlined />}>
+                Delete
+              </Button>
+            </Popconfirm>
+          ) : null}
+        </Space>
       ),
     },
   ]
@@ -156,11 +231,45 @@ export function HousesPage() {
       </Card>
 
       <Modal
+        confirmLoading={updateMutation.isPending}
+        destroyOnHidden
+        onCancel={() => {
+          setEditingHouse(null)
+          form.resetFields()
+        }}
+        onOk={() => form.submit()}
+        open={!!editingHouse}
+        title={editingHouse ? `Edit House: ${editingHouse.house_name}` : 'Edit House'}
+      >
+        <Form form={form} layout="vertical" onFinish={(values) => updateMutation.mutate(values)}>
+          <Form.Item label="House Name" name="hname" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Number of Rooms" name="numOfRooms" rules={[{ required: true }]}>
+            <InputNumber min={0} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item label="Bedrooms Per Unit" name="numOfbRooms" rules={[{ required: true }]}>
+            <InputNumber min={0} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item label="Rent Amount" name="rent" rules={[{ required: true }]}>
+            <InputNumber min={0} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item label="Location" name="location" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Status" name="status" rules={[{ required: true }]}>
+            <Select options={[{ label: 'Vacant', value: 'Vacant' }, { label: 'Occupied', value: 'Occupied' }]} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
         footer={null}
         onCancel={() => setPreviewImages([])}
         open={previewImages.length > 0}
         title={previewTitle}
         width={900}
+        destroyOnHidden
       >
         <Image.PreviewGroup>
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>

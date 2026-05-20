@@ -1,4 +1,6 @@
 import {
+  DeleteOutlined,
+  EditOutlined,
   FileTextOutlined,
   MailOutlined,
   PhoneOutlined,
@@ -6,12 +8,15 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Card, Space, Spin, Table, Tag, Typography, message } from 'antd'
+import { Alert, Button, Card, Form, Input, Modal, Select, Space, Spin, Table, Tag, Typography, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
+import { getApiErrorMessage } from '../../lib/api-errors'
 import { assetBaseURL, http } from '../../lib/http'
 import type { TelegramActionResponse, Tenant, TenantsResponse } from '../../lib/types'
+import { useFormOptions } from '../create/useFormOptions'
 
 async function fetchTenants() {
   const { data } = await http.get<TenantsResponse>('/resources/tenants.php')
@@ -19,11 +24,70 @@ async function fetchTenants() {
 }
 
 export function TenantsPage() {
+  const [form] = Form.useForm()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { data: formOptions, isLoading: isOptionsLoading } = useFormOptions()
+  const [editingTenant, setEditingTenant] = useState<Tenant | null>(null)
+  const [deletingTenant, setDeletingTenant] = useState<Tenant | null>(null)
   const { data, isLoading, isError } = useQuery({
     queryKey: ['tenants'],
     queryFn: fetchTenants,
+  })
+
+  const selectedHouseId = Form.useWatch('house_id', form)
+  const partitionOptions = useMemo(() => {
+    const houseId = Number(selectedHouseId || 0)
+    return (formOptions?.partitions ?? []).filter((partition) => partition.house_id === houseId)
+  }, [formOptions?.partitions, selectedHouseId])
+
+  const updateTenantMutation = useMutation({
+    mutationFn: async (values: any) => {
+      const { data } = await http.post('/manage/tenant.php', {
+        action: 'update',
+        tenantID: editingTenant?.tenantID,
+        ...values,
+      })
+      return data
+    },
+    onSuccess: async (response: any) => {
+      message.success(response?.message || 'Tenant updated successfully.')
+      setEditingTenant(null)
+      form.resetFields()
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['tenants'] }),
+        queryClient.invalidateQueries({ queryKey: ['houses'] }),
+        queryClient.invalidateQueries({ queryKey: ['partitions'] }),
+        queryClient.invalidateQueries({ queryKey: ['form-options'] }),
+      ])
+    },
+    onError: (error: unknown) => {
+      message.error(getApiErrorMessage(error, 'Tenant could not be updated.'))
+    },
+  })
+
+  const deleteTenantMutation = useMutation({
+    mutationFn: async (values: { tenantID: number; exit_date: string }) => {
+      const { data } = await http.post('/manage/tenant.php', {
+        action: 'delete',
+        tenantID: values.tenantID,
+        exit_date: values.exit_date,
+      })
+      return data
+    },
+    onSuccess: async (response: any) => {
+      message.success(response?.message || 'Tenant moved out successfully.')
+      setDeletingTenant(null)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['tenants'] }),
+        queryClient.invalidateQueries({ queryKey: ['houses'] }),
+        queryClient.invalidateQueries({ queryKey: ['partitions'] }),
+        queryClient.invalidateQueries({ queryKey: ['form-options'] }),
+      ])
+    },
+    onError: (error: unknown) => {
+      message.error(getApiErrorMessage(error, 'Tenant could not be moved out.'))
+    },
   })
 
   const fetchChatIdMutation = useMutation({
@@ -176,6 +240,47 @@ export function TenantsPage() {
           <Tag>No file</Tag>
         ),
     },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Space wrap>
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => {
+              const [phoneCode = formOptions?.defaultPhoneCode ?? '', ...rest] = (record.phone_number || '').split(' ')
+              setEditingTenant(record)
+              form.setFieldsValue({
+                house_id: record.houseID,
+                partition_id: record.partition_id,
+                tname: record.tenant_name,
+                temail: record.email,
+                idnum: record.ID_number,
+                phone_code: phoneCode,
+                phone_local: rest.join(' ').trim(),
+                prof: record.profession,
+                telegram_username: record.telegram_username,
+                telegram_chat_id: record.telegram_chat_id,
+                tenant_address: record.tenant_address,
+                tenant_home_country_address: record.tenant_home_country_address,
+                tenant_country: record.tenant_country,
+                start_date: record.start_date,
+                end_date: record.end_date,
+              })
+            }}
+          >
+            Edit
+          </Button>
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => setDeletingTenant(record)}
+          >
+            Delete
+          </Button>
+        </Space>
+      ),
+    },
   ]
 
   return (
@@ -196,7 +301,7 @@ export function TenantsPage() {
       />
 
       <Card>
-        {isLoading ? (
+        {isLoading || isOptionsLoading ? (
           <div className="page-loader">
             <Spin size="large" />
           </div>
@@ -212,6 +317,91 @@ export function TenantsPage() {
           />
         )}
       </Card>
+
+      <Modal
+        confirmLoading={updateTenantMutation.isPending}
+        destroyOnHidden
+        onCancel={() => {
+          setEditingTenant(null)
+          form.resetFields()
+        }}
+        onOk={() => form.submit()}
+        open={!!editingTenant}
+        title={editingTenant ? `Edit Tenant: ${editingTenant.tenant_name}` : 'Edit Tenant'}
+        width={760}
+      >
+        <Form form={form} layout="vertical" onFinish={(values) => updateTenantMutation.mutate(values)}>
+          <Form.Item label="House" name="house_id" rules={[{ required: true }]}>
+            <Select options={(formOptions?.houses ?? []).map((house) => ({ label: house.house_name, value: house.houseID }))} />
+          </Form.Item>
+          <Form.Item label="Partition" name="partition_id" rules={[{ required: true }]}>
+            <Select options={partitionOptions.map((partition) => ({ label: `${partition.house_name} - ${partition.partition_number} (${partition.partition_status})`, value: partition.partition_id }))} />
+          </Form.Item>
+          <Form.Item label="Tenant Name" name="tname" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Email" name="temail" rules={[{ required: true, type: 'email' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="ID Number" name="idnum">
+            <Input />
+          </Form.Item>
+          <Space style={{ display: 'flex' }} align="start">
+            <Form.Item label="Phone Code" name="phone_code" rules={[{ required: true }]}>
+              <Select style={{ width: 220 }} options={(formOptions?.countries ?? []).map((country) => ({ label: `${country.code} ${country.name}`, value: country.code }))} />
+            </Form.Item>
+            <Form.Item label="Phone Number" name="phone_local">
+              <Input />
+            </Form.Item>
+          </Space>
+          <Form.Item label="Profession" name="prof">
+            <Input />
+          </Form.Item>
+          <Form.Item label="Telegram Username" name="telegram_username">
+            <Input />
+          </Form.Item>
+          <Form.Item label="Telegram Chat ID" name="telegram_chat_id">
+            <Input />
+          </Form.Item>
+          <Form.Item label="Address" name="tenant_address">
+            <Input />
+          </Form.Item>
+          <Form.Item label="Home Country Address" name="tenant_home_country_address">
+            <Input />
+          </Form.Item>
+          <Form.Item label="Country" name="tenant_country" rules={[{ required: true }]}>
+            <Select options={(formOptions?.countries ?? []).map((country) => ({ label: country.name, value: country.name }))} />
+          </Form.Item>
+          <Form.Item label="Start Date" name="start_date" rules={[{ required: true }]}>
+            <Input type="date" />
+          </Form.Item>
+          <Form.Item label="Expected End Date" name="end_date">
+            <Input type="date" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        confirmLoading={deleteTenantMutation.isPending}
+        destroyOnHidden
+        onCancel={() => setDeletingTenant(null)}
+        onOk={() => {
+          if (deletingTenant) {
+            deleteTenantMutation.mutate({
+              tenantID: deletingTenant.tenantID,
+              exit_date: new Date().toISOString().slice(0, 10),
+            })
+          }
+        }}
+        open={!!deletingTenant}
+        okButtonProps={{ danger: true }}
+        okText="Move Out"
+        title={deletingTenant ? `Delete / Move Out: ${deletingTenant.tenant_name}` : 'Delete Tenant'}
+      >
+        <Typography.Paragraph style={{ marginBottom: 0 }}>
+          This will soft-delete the tenant and move them to the deleted/moved-out list using today&apos;s exit date.
+        </Typography.Paragraph>
+      </Modal>
     </div>
   )
 }

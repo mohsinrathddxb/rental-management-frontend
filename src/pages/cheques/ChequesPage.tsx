@@ -1,6 +1,6 @@
-import { EditOutlined, PlusOutlined } from '@ant-design/icons'
+import { CloseCircleOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Card, Col, Form, Input, InputNumber, Modal, Row, Space, Spin, Statistic, Table, Tabs, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Col, Form, Input, InputNumber, Modal, Row, Select, Space, Spin, Statistic, Table, Tabs, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
@@ -17,18 +17,79 @@ async function fetchCheques() {
 
 type RescheduleValues = {
   new_due_date: string
+  new_amount?: number
   reason?: string
 }
 
 type PaidValues = {
   paid_amount: number
   paid_date: string
+  payment_mode: 'Cheque' | 'Cash' | 'Bank Transfer' | 'Other'
+  cheque_number?: string
   payment_reference?: string
   paid_note?: string
 }
 
+type BounceValues = {
+  cheque_number?: string
+  bounce_reason?: string
+}
+
+type ChequeHouseGroup = {
+  key: string
+  isGroup: true
+  house_name: string
+  total_amount: number
+  remaining_amount: number
+  paid_amount: number
+  item_count: number
+  children: LandlordCheque[]
+}
+
+type ChequeTableRow = LandlordCheque | ChequeHouseGroup
+
+function isHouseGroupRow(record: ChequeTableRow): record is ChequeHouseGroup {
+  return 'isGroup' in record && record.isGroup === true
+}
+
 function chequeStatusTag(status: string) {
-  return status.toLowerCase() === 'paid' ? <Tag color="success">Paid</Tag> : <Tag color="processing">Pending</Tag>
+  const normalized = status.toLowerCase()
+  if (normalized === 'paid') return <Tag color="success">Paid</Tag>
+  if (normalized === 'partially paid') return <Tag color="warning">Partially Paid</Tag>
+  if (normalized === 'bounced') return <Tag color="error">Bounced</Tag>
+  if (normalized === 'rescheduled') return <Tag color="processing">Rescheduled</Tag>
+  return <Tag color="default">Unpaid</Tag>
+}
+
+function buildChequeHouseGroups(items: LandlordCheque[]) {
+  const grouped = new Map<string, ChequeHouseGroup>()
+
+  items.forEach((item) => {
+    const key = `house-${item.house_id}`
+    const current = grouped.get(key)
+
+    if (current) {
+      current.total_amount += item.amount
+      current.remaining_amount += item.remaining_amount
+      current.paid_amount += item.paid_amount
+      current.item_count += 1
+      current.children.push(item)
+      return
+    }
+
+    grouped.set(key, {
+      key,
+      isGroup: true,
+      house_name: item.house_name,
+      total_amount: item.amount,
+      remaining_amount: item.remaining_amount,
+      paid_amount: item.paid_amount,
+      item_count: 1,
+      children: [item],
+    })
+  })
+
+  return Array.from(grouped.values()).sort((a, b) => a.house_name.localeCompare(b.house_name))
 }
 
 export function ChequesPage() {
@@ -40,6 +101,7 @@ export function ChequesPage() {
   })
   const [rescheduleTarget, setRescheduleTarget] = useState<LandlordCheque | null>(null)
   const [paidTarget, setPaidTarget] = useState<LandlordCheque | null>(null)
+  const [bounceTarget, setBounceTarget] = useState<LandlordCheque | null>(null)
   const [pageError, setPageError] = useState('')
 
   const refreshCheques = async () => {
@@ -78,126 +140,187 @@ export function ChequesPage() {
     },
   })
 
-  const pendingColumns: ColumnsType<LandlordCheque> = useMemo(() => [
+  const bounceMutation = useMutation({
+    mutationFn: (values: BounceValues) => http.post('/resources/cheques.php', {
+      action: 'mark_bounced',
+      cheque_id: bounceTarget?.cheque_id,
+      ...values,
+    }),
+    onSuccess: async () => {
+      setPageError('')
+      setBounceTarget(null)
+      await refreshCheques()
+    },
+    onError: (err: unknown) => {
+      setPageError(getApiErrorMessage(err, 'Cheque bounce could not be recorded.'))
+    },
+  })
+
+  const groupedColumns: ColumnsType<ChequeTableRow> = useMemo(() => [
     {
-      title: 'House / Payee',
+      title: 'House / Party',
       key: 'house_payee',
-      render: (_, record) => (
-        <Space direction="vertical" size={0}>
-          <Typography.Text strong>{record.house_name}</Typography.Text>
-          <Typography.Text type="secondary">{record.payee_name}</Typography.Text>
-        </Space>
-      ),
+      render: (_, record) => {
+        if (isHouseGroupRow(record)) {
+          return (
+            <Space direction="vertical" size={0}>
+              <Typography.Text strong>{record.house_name}</Typography.Text>
+              <Typography.Text type="secondary">{record.item_count} cheque entries</Typography.Text>
+            </Space>
+          )
+        }
+
+        return (
+          <Space direction="vertical" size={0}>
+            <Typography.Text strong>{record.house_name}</Typography.Text>
+            <Typography.Text type="secondary">{record.category} | {record.payee_name}</Typography.Text>
+          </Space>
+        )
+      },
     },
     {
       title: 'Schedule',
       key: 'schedule',
-      render: (_, record) => (
-        <Space direction="vertical" size={0}>
-          <Typography.Text>{record.frequency}</Typography.Text>
-          <Typography.Text type="secondary">
-            Cheque {record.installment_number} of {record.total_installments}
-          </Typography.Text>
-        </Space>
-      ),
+      render: (_, record) => {
+        if (isHouseGroupRow(record)) {
+          return (
+            <Space direction="vertical" size={0}>
+              <Typography.Text>All schedules</Typography.Text>
+              <Typography.Text type="secondary">Expand to view monthly list</Typography.Text>
+            </Space>
+          )
+        }
+
+        return (
+          <Space direction="vertical" size={0}>
+            <Typography.Text>{record.frequency}</Typography.Text>
+            <Typography.Text type="secondary">
+              Cheque {record.installment_number} of {record.total_installments}
+            </Typography.Text>
+          </Space>
+        )
+      },
+    },
+    {
+      title: 'Cheque Details',
+      key: 'cheque_details',
+      render: (_, record) => {
+        if (isHouseGroupRow(record)) {
+          return (
+            <Space direction="vertical" size={0}>
+              <Typography.Text>-</Typography.Text>
+              <Typography.Text type="secondary">Grouped by house</Typography.Text>
+            </Space>
+          )
+        }
+
+        return (
+          <Space direction="vertical" size={0}>
+            <Typography.Text>{record.cheque_number || '-'}</Typography.Text>
+            <Typography.Text type="secondary">{record.payment_mode}</Typography.Text>
+          </Space>
+        )
+      },
     },
     {
       title: 'Amount',
-      dataIndex: 'amount',
       key: 'amount',
-      render: (value: number) => `AED ${value.toLocaleString()}`,
+      render: (_, record) => {
+        if (isHouseGroupRow(record)) {
+          return (
+            <Space direction="vertical" size={0}>
+              <Typography.Text strong>AED {record.total_amount.toLocaleString()}</Typography.Text>
+              <Typography.Text type="secondary">Remaining: AED {record.remaining_amount.toLocaleString()}</Typography.Text>
+            </Space>
+          )
+        }
+
+        return (
+          <Space direction="vertical" size={0}>
+            <Typography.Text strong>AED {record.amount.toLocaleString()}</Typography.Text>
+            <Typography.Text type="secondary">Remaining: AED {record.remaining_amount.toLocaleString()}</Typography.Text>
+          </Space>
+        )
+      },
     },
     {
       title: 'Due Date',
       key: 'due_date',
-      render: (_, record) => (
-        <Space direction="vertical" size={0}>
-          <Typography.Text>{record.due_date ? dayjs(record.due_date).format('DD MMM YYYY') : '-'}</Typography.Text>
-          {record.reschedule_count > 0 ? (
-            <Typography.Text type="secondary">
-              Original: {record.original_due_date ? dayjs(record.original_due_date).format('DD MMM YYYY') : '-'}
-            </Typography.Text>
-          ) : null}
-        </Space>
-      ),
+      render: (_, record) => {
+        if (isHouseGroupRow(record)) {
+          const sortedDates = [...record.children].map((item) => item.due_date).filter(Boolean).sort()
+          const firstDate = sortedDates[0]
+          const lastDate = sortedDates[sortedDates.length - 1]
+          return (
+            <Space direction="vertical" size={0}>
+              <Typography.Text>{firstDate ? dayjs(firstDate).format('DD MMM YYYY') : '-'}</Typography.Text>
+              <Typography.Text type="secondary">
+                {lastDate && lastDate !== firstDate ? `to ${dayjs(lastDate).format('DD MMM YYYY')}` : 'Expand for full dates'}
+              </Typography.Text>
+            </Space>
+          )
+        }
+
+        return (
+          <Space direction="vertical" size={0}>
+            <Typography.Text>{record.due_date ? dayjs(record.due_date).format('DD MMM YYYY') : '-'}</Typography.Text>
+            {record.reschedule_count > 0 ? (
+              <Typography.Text type="secondary">
+                Original: {record.original_due_date ? dayjs(record.original_due_date).format('DD MMM YYYY') : '-'}
+              </Typography.Text>
+            ) : null}
+          </Space>
+        )
+      },
     },
     {
       title: 'Status',
-      dataIndex: 'status',
       key: 'status',
-      render: (value: string) => chequeStatusTag(value),
+      render: (_, record) => {
+        if (isHouseGroupRow(record)) {
+          const hasBounced = record.children.some((item) => item.status.toLowerCase() === 'bounced')
+          const hasPartial = record.children.some((item) => item.status.toLowerCase() === 'partially paid')
+          const hasRescheduled = record.children.some((item) => item.status.toLowerCase() === 'rescheduled')
+          const allPaid = record.children.every((item) => item.status.toLowerCase() === 'paid')
+
+          if (allPaid) return <Tag color="success">All Paid</Tag>
+          if (hasBounced) return <Tag color="error">Has Bounced</Tag>
+          if (hasPartial) return <Tag color="warning">Has Partial</Tag>
+          if (hasRescheduled) return <Tag color="processing">Has Rescheduled</Tag>
+          return <Tag color="default">Open</Tag>
+        }
+
+        return chequeStatusTag(record.status)
+      },
     },
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record) => (
-        <Space wrap>
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => setRescheduleTarget(record)}
-            size="small"
-          >
-            Move Date
-          </Button>
-          <Button
-            onClick={() => setPaidTarget(record)}
-            size="small"
-            type="primary"
-          >
-            Add Paid Entry
-          </Button>
-        </Space>
-      ),
+      render: (_, record) => {
+        if (isHouseGroupRow(record)) {
+          return <Typography.Text type="secondary">Expand this house to manage entries</Typography.Text>
+        }
+
+        return (
+          <Space wrap>
+            <Button icon={<EditOutlined />} onClick={() => setRescheduleTarget(record)} size="small">
+              Reschedule
+            </Button>
+            <Button onClick={() => setPaidTarget(record)} size="small" type="primary">
+              Record Payment
+            </Button>
+            <Button danger icon={<CloseCircleOutlined />} onClick={() => setBounceTarget(record)} size="small">
+              Mark Bounced
+            </Button>
+          </Space>
+        )
+      },
     },
   ], [])
 
-  const paidColumns: ColumnsType<LandlordCheque> = useMemo(() => [
-    {
-      title: 'House / Payee',
-      key: 'house_payee',
-      render: (_, record) => (
-        <Space direction="vertical" size={0}>
-          <Typography.Text strong>{record.house_name}</Typography.Text>
-          <Typography.Text type="secondary">{record.payee_name}</Typography.Text>
-        </Space>
-      ),
-    },
-    {
-      title: 'Cheque',
-      key: 'schedule',
-      render: (_, record) => (
-        <Space direction="vertical" size={0}>
-          <Typography.Text>{record.frequency}</Typography.Text>
-          <Typography.Text type="secondary">
-            Cheque {record.installment_number} of {record.total_installments}
-          </Typography.Text>
-        </Space>
-      ),
-    },
-    {
-      title: 'Paid',
-      key: 'paid',
-      render: (_, record) => (
-        <Space direction="vertical" size={0}>
-          <Typography.Text strong>AED {(record.paid_amount || record.amount).toLocaleString()}</Typography.Text>
-          <Typography.Text type="secondary">
-            {record.paid_date ? dayjs(record.paid_date).format('DD MMM YYYY') : '-'}
-          </Typography.Text>
-        </Space>
-      ),
-    },
-    {
-      title: 'Reference',
-      dataIndex: 'payment_reference',
-      key: 'payment_reference',
-      render: (value: string) => value || '-',
-    },
-    {
-      title: 'Notes',
-      key: 'notes',
-      render: (_, record) => record.paid_note || record.notes || '-',
-    },
-  ], [])
+  const groupedComing = useMemo(() => buildChequeHouseGroups(data?.coming ?? []), [data?.coming])
+  const groupedRemaining = useMemo(() => buildChequeHouseGroups(data?.remaining ?? []), [data?.remaining])
+  const groupedPaid = useMemo(() => buildChequeHouseGroups(data?.paid ?? []), [data?.paid])
 
   const eventColumns: ColumnsType<LandlordChequeEvent> = useMemo(() => [
     {
@@ -234,7 +357,7 @@ export function ChequesPage() {
     <div className="page-stack">
       <PageHeader
         title="Cheques"
-        subtitle="Track landlord cheques, move dates when the landlord agrees to defer, and record paid cheques manually."
+        subtitle="Track outgoing house-related cheque and payable entries, including partial, cash, bounced, and rescheduled cases."
         breadcrumbs={[{ title: 'Dashboard' }, { title: 'Cheques' }]}
         extra={
           <Button icon={<PlusOutlined />} onClick={() => navigate('/create/cheque')} type="primary">
@@ -269,17 +392,41 @@ export function ChequesPage() {
                 {
                   key: 'coming',
                   label: `Coming Cheques (${data.coming.length})`,
-                  children: <Table columns={pendingColumns} dataSource={data.coming} rowKey="cheque_id" scroll={{ x: 1100 }} />,
+                  children: (
+                    <Table
+                      columns={groupedColumns}
+                      dataSource={groupedComing}
+                      rowKey={(record) => isHouseGroupRow(record) ? record.key : `cheque-${record.cheque_id}`}
+                      scroll={{ x: 1300 }}
+                      pagination={false}
+                    />
+                  ),
                 },
                 {
                   key: 'remaining',
                   label: `Remaining Cheques (${data.remaining.length})`,
-                  children: <Table columns={pendingColumns} dataSource={data.remaining} rowKey="cheque_id" scroll={{ x: 1100 }} />,
+                  children: (
+                    <Table
+                      columns={groupedColumns}
+                      dataSource={groupedRemaining}
+                      rowKey={(record) => isHouseGroupRow(record) ? record.key : `cheque-${record.cheque_id}`}
+                      scroll={{ x: 1300 }}
+                      pagination={false}
+                    />
+                  ),
                 },
                 {
                   key: 'paid',
                   label: `Paid Cheques (${data.paid.length})`,
-                  children: <Table columns={paidColumns} dataSource={data.paid} rowKey="cheque_id" scroll={{ x: 900 }} />,
+                  children: (
+                    <Table
+                      columns={groupedColumns}
+                      dataSource={groupedPaid}
+                      rowKey={(record) => isHouseGroupRow(record) ? record.key : `cheque-${record.cheque_id}`}
+                      scroll={{ x: 1300 }}
+                      pagination={false}
+                    />
+                  ),
                 },
                 {
                   key: 'history',
@@ -303,12 +450,16 @@ export function ChequesPage() {
           onFinish={(values) => rescheduleMutation.mutate(values)}
           initialValues={{
             new_due_date: rescheduleTarget?.due_date,
+            new_amount: rescheduleTarget?.amount,
             reason: rescheduleTarget?.reschedule_note || '',
           }}
           key={rescheduleTarget?.cheque_id}
         >
           <Form.Item label="New Due Date" name="new_due_date" rules={[{ required: true }]}>
             <Input type="date" />
+          </Form.Item>
+          <Form.Item label="Updated Amount" name="new_amount" rules={[{ required: true }]}>
+            <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item label="Reason / Landlord Note" name="reason">
             <Input.TextArea rows={4} placeholder="Example: landlord agreed to take this cheque next month." />
@@ -329,8 +480,10 @@ export function ChequesPage() {
           layout="vertical"
           onFinish={(values) => paidMutation.mutate(values)}
           initialValues={{
-            paid_amount: paidTarget?.amount,
+            paid_amount: paidTarget?.remaining_amount || paidTarget?.amount,
             paid_date: new Date().toISOString().slice(0, 10),
+            payment_mode: paidTarget?.payment_mode || 'Cheque',
+            cheque_number: paidTarget?.cheque_number || '',
             payment_reference: '',
             paid_note: '',
           }}
@@ -342,6 +495,12 @@ export function ChequesPage() {
           <Form.Item label="Paid Date" name="paid_date" rules={[{ required: true }]}>
             <Input type="date" />
           </Form.Item>
+          <Form.Item label="Payment Mode" name="payment_mode" rules={[{ required: true }]}>
+            <Select options={['Cheque', 'Cash', 'Bank Transfer', 'Other'].map((value) => ({ label: value, value }))} />
+          </Form.Item>
+          <Form.Item label="Cheque Number" name="cheque_number">
+            <Input placeholder="Optional cheque number" />
+          </Form.Item>
           <Form.Item label="Reference" name="payment_reference">
             <Input placeholder="Cheque / transfer / voucher reference" />
           </Form.Item>
@@ -349,7 +508,34 @@ export function ChequesPage() {
             <Input.TextArea rows={4} placeholder="Optional paid-entry notes" />
           </Form.Item>
           <Button htmlType="submit" loading={paidMutation.isPending} type="primary">
-            Mark as Paid
+            Save Payment
+          </Button>
+        </Form>
+      </Modal>
+
+      <Modal
+        footer={null}
+        onCancel={() => setBounceTarget(null)}
+        open={Boolean(bounceTarget)}
+        title="Mark Cheque as Bounced"
+      >
+        <Form<BounceValues>
+          layout="vertical"
+          onFinish={(values) => bounceMutation.mutate(values)}
+          initialValues={{
+            cheque_number: bounceTarget?.cheque_number || '',
+            bounce_reason: bounceTarget?.bounce_reason || '',
+          }}
+          key={bounceTarget?.cheque_id}
+        >
+          <Form.Item label="Cheque Number" name="cheque_number">
+            <Input placeholder="Cheque number if available" />
+          </Form.Item>
+          <Form.Item label="Bounce Reason" name="bounce_reason">
+            <Input.TextArea rows={4} placeholder="Optional note about why the cheque bounced." />
+          </Form.Item>
+          <Button danger htmlType="submit" loading={bounceMutation.isPending} type="primary">
+            Save Bounce Status
           </Button>
         </Form>
       </Modal>

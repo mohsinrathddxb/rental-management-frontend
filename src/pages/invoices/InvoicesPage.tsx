@@ -124,11 +124,13 @@ export function InvoicesPage() {
           {data?.canManage ? (
             <Button
               icon={<SendOutlined />}
+              disabled={!record.telegram_chat_id}
               loading={telegramMutation.isPending && telegramMutation.variables === record.invoiceNumber}
               onClick={() => telegramMutation.mutate(record.invoiceNumber)}
               size="small"
               type="primary"
               ghost
+              title={record.telegram_chat_id ? 'Send invoice on Telegram' : record.telegram_username ? 'Fetch chat ID from the tenant page first' : 'Add Telegram details on the tenant page first'}
             >
               Send Telegram
             </Button>

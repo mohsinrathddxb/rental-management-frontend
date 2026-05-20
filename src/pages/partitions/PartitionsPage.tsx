@@ -122,9 +122,11 @@ function PartitionCard({
         </Space>
 
         <Space wrap>
-          <Button onClick={() => onAddTenant(partition)} type="primary">
-            Add Tenant
-          </Button>
+          {canManage ? (
+            <Button onClick={() => onAddTenant(partition)} type="primary">
+              Add Tenant
+            </Button>
+          ) : null}
           {canManage ? (
             <Button icon={<EditOutlined />} onClick={() => onEdit(partition)}>
               Edit
@@ -212,26 +214,28 @@ export function PartitionsPage() {
     <div className="page-stack">
       <PageHeader
         title="Partitions"
-        subtitle="Vacant partitions are listed first, matching the current PHP admin behavior."
+        subtitle={data?.canManage ? 'Vacant partitions are listed first, matching the current PHP admin behavior.' : 'Only available vacant partitions are shown here for tenants.'}
         breadcrumbs={[{ title: 'Dashboard' }, { title: 'Partitions' }]}
         extra={
-          <Space wrap>
-            <Button
-              icon={<PlusCircleOutlined />}
-              onClick={() => navigate('/create/tenant')}
-            >
-              Add Tenant
-            </Button>
-            <Button
-              icon={<PlusOutlined />}
-              onClick={() =>
-                navigate(`/create/partition${houseId ? `?house_id=${encodeURIComponent(houseId)}` : ''}`)
-              }
-              type="primary"
-            >
-              Add Partition
-            </Button>
-          </Space>
+          data?.canManage ? (
+            <Space wrap>
+              <Button
+                icon={<PlusCircleOutlined />}
+                onClick={() => navigate('/create/tenant')}
+              >
+                Add Tenant
+              </Button>
+              <Button
+                icon={<PlusOutlined />}
+                onClick={() =>
+                  navigate(`/create/partition${houseId ? `?house_id=${encodeURIComponent(houseId)}` : ''}`)
+                }
+                type="primary"
+              >
+                Add Partition
+              </Button>
+            </Space>
+          ) : undefined
         }
       />
 

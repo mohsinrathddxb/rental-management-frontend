@@ -9,7 +9,8 @@ import { useFormOptions } from './useFormOptions'
 
 type CreateChequeValues = {
   house_id: number
-  payee_name: string
+  category: 'Landlord Payment' | 'DEWA Bill' | 'Other Payment'
+  party_name: string
   frequency: 'Monthly' | 'Quarterly' | 'Yearly'
   start_date: string
   amount: number
@@ -54,6 +55,7 @@ export function CreateChequePage() {
           layout="vertical"
           onFinish={(values) => mutation.mutate(values)}
           initialValues={{
+            category: 'Landlord Payment',
             frequency: 'Monthly',
             start_date: new Date().toISOString().slice(0, 10),
             number_of_cheques: 12,
@@ -67,8 +69,15 @@ export function CreateChequePage() {
               }))}
             />
           </Form.Item>
-          <Form.Item label="Landlord / Payee Name" name="payee_name" rules={[{ required: true }]}>
-            <Input placeholder="Enter landlord or payee name" />
+          <Form.Item label="Payment Category" name="category" rules={[{ required: true }]}>
+            <Select options={[
+              { label: 'Landlord Payment', value: 'Landlord Payment' },
+              { label: 'DEWA Bill', value: 'DEWA Bill' },
+              { label: 'Other Payment', value: 'Other Payment' },
+            ]} />
+          </Form.Item>
+          <Form.Item label="Party / Payee Name" name="party_name" rules={[{ required: true }]}>
+            <Input placeholder="Enter landlord, DEWA, or other payee name" />
           </Form.Item>
           <Form.Item label="Frequency" name="frequency" rules={[{ required: true }]}>
             <Select options={['Monthly', 'Quarterly', 'Yearly'].map((value) => ({ label: value, value }))} />
@@ -86,7 +95,7 @@ export function CreateChequePage() {
             <Input.TextArea rows={4} placeholder="Optional notes about this landlord schedule" />
           </Form.Item>
           <Button htmlType="submit" loading={mutation.isPending} type="primary">
-            Create Cheque Plan
+            Create Outgoing Cheque Plan
           </Button>
         </Form>
       </Card>

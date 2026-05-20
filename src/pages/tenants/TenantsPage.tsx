@@ -4,18 +4,19 @@ import {
   FileTextOutlined,
   MailOutlined,
   PhoneOutlined,
+  SearchOutlined,
   SendOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Card, Form, Input, Modal, Select, Space, Spin, Table, Tag, Typography, message } from 'antd'
+import { Alert, Button, Card, Form, Input, Modal, Select, Space, Spin, Table, Tag, Tooltip, Typography, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { getApiErrorMessage } from '../../lib/api-errors'
 import { assetBaseURL, http } from '../../lib/http'
-import type { TelegramActionResponse, Tenant, TenantsResponse } from '../../lib/types'
+import type { TelegramActionResponse, TelegramRecentChat, Tenant, TenantsResponse } from '../../lib/types'
 import { useFormOptions } from '../create/useFormOptions'
 
 async function fetchTenants() {
@@ -30,6 +31,8 @@ export function TenantsPage() {
   const { data: formOptions, isLoading: isOptionsLoading } = useFormOptions()
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null)
   const [deletingTenant, setDeletingTenant] = useState<Tenant | null>(null)
+  const [chatPickerTenant, setChatPickerTenant] = useState<Tenant | null>(null)
+  const [recentChats, setRecentChats] = useState<TelegramRecentChat[]>([])
   const { data, isLoading, isError } = useQuery({
     queryKey: ['tenants'],
     queryFn: fetchTenants,
@@ -123,6 +126,47 @@ export function TenantsPage() {
     },
   })
 
+  const recentChatsMutation = useMutation({
+    mutationFn: async (tenantId: number) => {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions.php', {
+        tenant_id: tenantId,
+        telegram_action: 'list_recent_chats',
+      })
+      return data
+    },
+    onSuccess: (response) => {
+      setRecentChats(response.items ?? [])
+      if ((response.items ?? []).length === 0) {
+        message.info(response.message || 'No recent Telegram chats were found.')
+      }
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'Recent Telegram chats could not be loaded.')
+    },
+  })
+
+  const assignChatMutation = useMutation({
+    mutationFn: async (values: { tenant_id: number; chat_id: string; telegram_username?: string }) => {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions.php', {
+        tenant_id: values.tenant_id,
+        telegram_action: 'assign_chat_id',
+        chat_id: values.chat_id,
+        telegram_username: values.telegram_username,
+      })
+      return data
+    },
+    onSuccess: async (response) => {
+      message.success(response.message || 'Telegram chat assigned successfully.')
+      setChatPickerTenant(null)
+      setRecentChats([])
+      await queryClient.invalidateQueries({ queryKey: ['tenants'] })
+      await queryClient.invalidateQueries({ queryKey: ['invoices'] })
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'Telegram chat could not be assigned.')
+    },
+  })
+
   const columns: ColumnsType<Tenant> = [
     {
       title: 'Tenant',
@@ -178,14 +222,28 @@ export function TenantsPage() {
             {record.telegram_chat_id || 'No chat ID'}
           </Typography.Text>
           <Space wrap>
+            <Tooltip title={record.telegram_username ? 'Fetch the chat ID by matching this tenant username in recent bot messages.' : 'Add a Telegram username or use Find Recent Chat to assign a chat directly.'}>
+              <Button
+                icon={<SendOutlined />}
+                loading={fetchChatIdMutation.isPending && fetchChatIdMutation.variables === record.tenantID}
+                onClick={() => fetchChatIdMutation.mutate(record.tenantID)}
+                size="small"
+                disabled={!record.telegram_username}
+              >
+                Fetch Chat ID
+              </Button>
+            </Tooltip>
             <Button
-              icon={<SendOutlined />}
-              loading={fetchChatIdMutation.isPending && fetchChatIdMutation.variables === record.tenantID}
-              onClick={() => fetchChatIdMutation.mutate(record.tenantID)}
+              icon={<SearchOutlined />}
+              loading={recentChatsMutation.isPending && recentChatsMutation.variables === record.tenantID}
+              onClick={() => {
+                setChatPickerTenant(record)
+                setRecentChats([])
+                recentChatsMutation.mutate(record.tenantID)
+              }}
               size="small"
-              disabled={!record.telegram_username}
             >
-              Fetch Chat ID
+              Find Recent Chat
             </Button>
             <Button
               icon={<SendOutlined />}
@@ -379,6 +437,64 @@ export function TenantsPage() {
             <Input type="date" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        destroyOnHidden
+        footer={null}
+        onCancel={() => {
+          setChatPickerTenant(null)
+          setRecentChats([])
+        }}
+        open={!!chatPickerTenant}
+        title={chatPickerTenant ? `Assign Telegram Chat: ${chatPickerTenant.tenant_name}` : 'Assign Telegram Chat'}
+        width={760}
+      >
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Typography.Text type="secondary">
+            Pick the correct recent bot chat for this tenant, or save the username/chat ID from the Edit dialog manually.
+          </Typography.Text>
+          {recentChatsMutation.isPending ? (
+            <div className="page-loader">
+              <Spin size="large" />
+            </div>
+          ) : recentChats.length === 0 ? (
+            <Alert type="info" showIcon message="No recent chats found. Ask the tenant to message the bot, then reopen this picker." />
+          ) : (
+            <Space direction="vertical" size="small" style={{ width: '100%' }}>
+              {recentChats.map((chat) => (
+                <Card key={chat.chat_id} size="small">
+                  <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                    <Typography.Text strong>
+                      {chat.display_name || 'Unknown Telegram user'}
+                      {chat.username ? ` (@${chat.username})` : ''}
+                    </Typography.Text>
+                    <Typography.Text type="secondary">Chat ID: {chat.chat_id}</Typography.Text>
+                    <Typography.Text type="secondary">
+                      {chat.message_preview || 'No text preview available.'}
+                    </Typography.Text>
+                    <Space>
+                      <Button
+                        loading={assignChatMutation.isPending}
+                        onClick={() =>
+                          chatPickerTenant &&
+                          assignChatMutation.mutate({
+                            tenant_id: chatPickerTenant.tenantID,
+                            chat_id: chat.chat_id,
+                            telegram_username: chat.username,
+                          })
+                        }
+                        type="primary"
+                      >
+                        Use This Chat
+                      </Button>
+                    </Space>
+                  </Space>
+                </Card>
+              ))}
+            </Space>
+          )}
+        </Space>
       </Modal>
 
       <Modal

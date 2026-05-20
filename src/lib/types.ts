@@ -135,12 +135,22 @@ export type ApiMessageResponse = {
 
 export type TelegramActionResponse = ApiMessageResponse & {
   chat_id?: string
+  items?: TelegramRecentChat[]
+}
+
+export type TelegramRecentChat = {
+  chat_id: string
+  username: string
+  display_name: string
+  message_preview: string
 }
 
 export type Invoice = {
   invoiceNumber: string
   tenant_name: string
   phone_number: string
+  telegram_username: string
+  telegram_chat_id: string
   tenantID: number
   amountDue: number
   rent_amount: number
@@ -200,12 +210,35 @@ export type Complaint = {
   reopened_count: number
   created_at: string
   updated_at: string
+  attachments: ComplaintAttachment[]
+  history: ComplaintHistoryEntry[]
 }
 
 export type ComplaintsResponse = {
   ok: boolean
   canManage: boolean
   items: Complaint[]
+}
+
+export type ComplaintAttachment = {
+  attachment_id: number
+  file_name: string
+  file_path: string
+  file_url: string
+  mime_type: string
+  file_size: number
+  uploaded_by_role: string
+  created_at: string
+}
+
+export type ComplaintHistoryEntry = {
+  history_id: number
+  old_status: string
+  new_status: string
+  note: string
+  actor_role: string
+  actor_name: string
+  created_at: string
 }
 
 export type Notice = {
@@ -278,13 +311,18 @@ export type ExpensesResponse = {
 
 export type LandlordCheque = {
   cheque_id: number
+  plan_id: number
   house_id: number
   house_name: string
+  category: string
   payee_name: string
   frequency: string
   installment_number: number
   total_installments: number
+  cheque_number: string
+  payment_mode: string
   amount: number
+  remaining_amount: number
   due_date: string
   original_due_date: string
   status: string
@@ -295,6 +333,8 @@ export type LandlordCheque = {
   paid_date: string
   payment_reference: string
   paid_note: string
+  issue_date: string
+  bounce_reason: string
   created_by_name: string
   updated_at: string
   created_at: string

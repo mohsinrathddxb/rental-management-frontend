@@ -10,12 +10,20 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
-import { http } from '../../lib/http'
+import { assetBaseURL, http } from '../../lib/http'
 import type { Payment, PaymentsResponse, TelegramActionResponse } from '../../lib/types'
 
 async function fetchPayments() {
   const { data } = await http.get<PaymentsResponse>('/resources/payments')
   return data
+}
+
+function buildInvoicePdfHref(invoiceNumber: string) {
+  return `${assetBaseURL}/api/admin/documents/invoice-pdf?invoice=${encodeURIComponent(invoiceNumber)}`
+}
+
+function buildReceiptPdfHref(paymentId: number) {
+  return `${assetBaseURL}/api/admin/documents/payment-receipt-pdf?payment=${paymentId}`
 }
 
 export function PaymentsPage() {
@@ -65,7 +73,7 @@ export function PaymentsPage() {
         <Space wrap>
           {record.invoice_pdf_url ? (
             <Button
-              href={record.invoice_pdf_url}
+              href={buildInvoicePdfHref(record.invoiceNumber)}
               icon={<FileTextOutlined />}
               size="small"
               target="_blank"
@@ -75,7 +83,7 @@ export function PaymentsPage() {
           ) : null}
           {record.receipt_pdf_url ? (
             <Button
-              href={record.receipt_pdf_url}
+              href={buildReceiptPdfHref(record.paymentID)}
               icon={<FilePdfOutlined />}
               size="small"
               target="_blank"

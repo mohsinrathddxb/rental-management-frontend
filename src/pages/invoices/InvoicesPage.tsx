@@ -19,6 +19,11 @@ async function fetchInvoices() {
   return data
 }
 
+function formatAed(value: unknown) {
+  const amount = Number(value ?? 0)
+  return Number.isFinite(amount) ? amount.toLocaleString() : '0'
+}
+
 function invoiceStatusTag(status: string) {
   const normalized = status.trim().toLowerCase()
   if (normalized === 'paid') return <Tag color="success">Fully Paid</Tag>
@@ -71,15 +76,15 @@ export function InvoicesPage() {
       key: 'amount',
       render: (_, record) => (
         <Space direction="vertical" size={0}>
-          <Typography.Text strong>AED {record.amountDue.toLocaleString()}</Typography.Text>
+          <Typography.Text strong>AED {formatAed(record.amountDue)}</Typography.Text>
           <Typography.Text type="secondary">
-            Deposit due: AED {record.deposit_due_amount.toLocaleString()}
+            Deposit due: AED {formatAed(record.deposit_due_amount)}
           </Typography.Text>
           <Typography.Text type="secondary">
-            Rent remaining: AED {record.rent_due_amount.toLocaleString()}
+            Rent remaining: AED {formatAed(record.rent_due_amount)}
           </Typography.Text>
           <Typography.Text type="secondary">
-            Total: AED {record.total_amount.toLocaleString()}
+            Total: AED {formatAed(record.total_amount)}
           </Typography.Text>
         </Space>
       ),

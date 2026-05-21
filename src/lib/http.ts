@@ -12,8 +12,14 @@ function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, '')
 }
 
+function nonEmptyTrimmed(value: string | undefined) {
+  const trimmed = trimTrailingSlash(String(value ?? '').trim())
+  return trimmed || undefined
+}
+
 export const assetBaseURL =
-  import.meta.env.VITE_ASSET_BASE_URL ??
+  nonEmptyTrimmed(import.meta.env.VITE_ASSET_BASE_URL) ??
+  nonEmptyTrimmed(import.meta.env.VITE_BACKEND_ORIGIN) ??
   (isAbsoluteUrl(apiBaseURL)
     ? trimTrailingSlash(apiBaseURL).replace(/\/api\/admin$/i, '')
     : trimTrailingSlash(import.meta.env.VITE_PHP_BASE_URL ?? ''))

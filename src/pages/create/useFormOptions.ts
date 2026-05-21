@@ -7,10 +7,14 @@ async function fetchFormOptions() {
   return data
 }
 
-export function useFormOptions() {
+export function useFormOptions(options?: {
+  staleTime?: number
+  refetchOnMount?: boolean | 'always'
+}) {
   return useQuery({
     queryKey: ['form-options'],
     queryFn: fetchFormOptions,
-    staleTime: 5 * 60 * 1000,
+    staleTime: options?.staleTime ?? 5 * 60 * 1000,
+    refetchOnMount: options?.refetchOnMount,
   })
 }

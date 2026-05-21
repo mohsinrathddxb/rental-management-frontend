@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Card, Checkbox, Form, Input, InputNumber, Select, Spin, Upload } from 'antd'
 import type { UploadFile } from 'antd'
 import { useMemo, useState } from 'react'
@@ -20,6 +20,7 @@ type CreatePartitionValues = {
 
 export function CreatePartitionPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
   const preselectedHouseId = Number(searchParams.get('house_id') ?? 0) || undefined
   const { data, isLoading } = useFormOptions()
@@ -54,7 +55,12 @@ export function CreatePartitionPage() {
       })
       return response
     },
-    onSuccess: (_, values) => {
+    onSuccess: async (_, values) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['form-options'] }),
+        queryClient.invalidateQueries({ queryKey: ['partitions'] }),
+        queryClient.invalidateQueries({ queryKey: ['houses'] }),
+      ])
       setError('')
       setMessage('Partition created successfully.')
       const target = values.house_id ? `/partitions?house_id=${encodeURIComponent(String(values.house_id))}` : '/partitions'

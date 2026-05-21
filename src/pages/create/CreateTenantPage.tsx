@@ -33,7 +33,9 @@ export function CreateTenantPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
-  const { data, isLoading } = useFormOptions()
+  const { data, isLoading } = useFormOptions({
+    refetchOnMount: 'always',
+  })
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const initialHouseValue = searchParams.get('house_id') ?? ''

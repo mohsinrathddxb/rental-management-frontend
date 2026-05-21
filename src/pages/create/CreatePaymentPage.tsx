@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Card, Form, Input, InputNumber, Select, Space, Spin, Typography } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -23,8 +23,12 @@ function formatAed(amount: unknown) {
 export function CreatePaymentPage() {
   const [form] = Form.useForm<CreatePaymentValues>()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
-  const { data, isLoading } = useFormOptions()
+  const { data, isLoading } = useFormOptions({
+    staleTime: 0,
+    refetchOnMount: 'always',
+  })
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const initialInvoiceNumber = searchParams.get('invoiceNumber') ?? ''
@@ -62,6 +66,13 @@ export function CreatePaymentPage() {
       })
     },
     onSuccess: () => {
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['form-options'] }),
+        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+        queryClient.invalidateQueries({ queryKey: ['payments'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
+      ])
       setError('')
       setMessage('Payment saved successfully.')
       setTimeout(() => navigate('/payments'), 600)
@@ -74,6 +85,14 @@ export function CreatePaymentPage() {
 
   useEffect(() => {
     if (!invoice) {
+      if (selectedInvoice) {
+        form.setFieldsValue({
+          invoiceNumber: undefined,
+          amountDue: undefined,
+          paidAmount: undefined,
+        })
+        setSelectedInvoice('')
+      }
       return
     }
 
@@ -82,7 +101,7 @@ export function CreatePaymentPage() {
       amountDue: invoice.amountDue,
       paidAmount: invoice.amountDue,
     })
-  }, [form, invoice])
+  }, [form, invoice, selectedInvoice])
 
   if (isLoading) {
     return (

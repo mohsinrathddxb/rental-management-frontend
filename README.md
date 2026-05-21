@@ -1,6 +1,6 @@
 # Rental Management Frontend
 
-React + TypeScript + Vite frontend for the existing PHP rental management backend.
+React + TypeScript + Vite frontend for the Node rental management backend.
 
 ## Stack
 
@@ -12,26 +12,15 @@ React + TypeScript + Vite frontend for the existing PHP rental management backen
 - React Query
 - Axios
 
-## Current migration slice
+## Current app
 
-- Login
-- Dashboard
-- Houses
-- Tenants
-
-The backend logic still lives in the PHP app at:
-
-`D:\Personal\RM\Rental-house-management-system`
-
-The React app talks to JSON endpoints under:
-
-`/api/admin`
+The deployed frontend talks to the Node backend through `/api/admin` routes and backend-hosted `/uploads` assets.
 
 ## Setup
 
 1. Copy `.env.example` to `.env`
-2. Confirm the PHP app is running in XAMPP at:
-   `http://localhost/Rental-house-management-system`
+2. Confirm the Node backend is running locally at:
+   `http://localhost:4000`
 3. Install dependencies:
 
 ```bash
@@ -48,23 +37,22 @@ Default Vite URL:
 
 `http://localhost:5173`
 
-## Local XAMPP config
+## Local Node config
 
-Use this `.env` for the PHP backend in XAMPP:
+Use `.env.example` for local development against the Node backend.
 
-```bash
-VITE_API_BASE_URL=/api/admin
-VITE_PHP_BASE_URL=http://localhost/Rental-house-management-system
-```
+If you want a direct copy helper, `.env.node-backend.example` contains the same local backend base URLs.
 
-Vite will proxy `/api/admin` and `/uploads` to the PHP app, which keeps session cookies working during local development.
+## Render config
 
-## Optional Node backend config
+Use `.env.render.example` as the reference for Render environment variables:
 
-If you want to test against the separate Node backend instead of XAMPP, copy `.env.node-backend.example` to `.env`.
+- `VITE_API_BASE_URL=https://your-backend.onrender.com/api/admin`
+- `VITE_BACKEND_ORIGIN=https://your-backend.onrender.com`
+- `VITE_ASSET_BASE_URL=https://your-backend.onrender.com`
 
 ## Notes
 
-- Authentication currently uses the existing PHP session/cookie flow.
-- The PHP backend now exposes JSON endpoints for auth, session, dashboard, houses, and tenants.
-- This is the first migration slice. CRUD modals, invoices, payments, complaints, and the remaining admin screens can be moved next.
+- Local and Render must use different `.env` values.
+- Render should never depend on local file paths or local MySQL/XAMPP.
+- Backend documents and uploads should always resolve from the backend origin in production.

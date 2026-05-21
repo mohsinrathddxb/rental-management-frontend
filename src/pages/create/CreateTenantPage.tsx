@@ -40,7 +40,7 @@ export function CreateTenantPage() {
   const initialPartitionId = searchParams.get('partition_id')
   const [houseValue, setHouseValue] = useState<string>(initialHouseValue)
   const mutation = useMutation({
-    mutationFn: (values: CreateTenantValues) => http.post('/create/tenant.php', values),
+    mutationFn: (values: CreateTenantValues) => http.post('/create/tenant', values),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['form-options'] }),

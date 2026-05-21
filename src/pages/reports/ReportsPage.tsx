@@ -18,7 +18,7 @@ async function fetchReports(month: string | null, year: string | null, quarter: 
   if (month) params.set('month', month)
   if (year) params.set('year', year)
   if (quarter) params.set('quarter', quarter)
-  const { data } = await http.get<ReportsResponse>(`/resources/reports.php?${params.toString()}`)
+  const { data } = await http.get<ReportsResponse>(`/resources/reports?${params.toString()}`)
   return data
 }
 

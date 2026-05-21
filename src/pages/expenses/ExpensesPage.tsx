@@ -13,7 +13,7 @@ async function fetchExpenses(month: string | null, category: string | null) {
   if (month) params.set('month', month)
   if (category) params.set('category', category)
   const query = params.toString() ? `?${params.toString()}` : ''
-  const { data } = await http.get<ExpensesResponse>(`/resources/expenses.php${query}`)
+  const { data } = await http.get<ExpensesResponse>(`/resources/expenses${query}`)
   return data
 }
 

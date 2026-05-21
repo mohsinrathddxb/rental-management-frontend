@@ -35,7 +35,7 @@ export function CreateExpensePage() {
       })
       const file = values.expense_attachment?.[0]?.originFileObj
       if (file) formData.append('expense_attachment', file)
-      const { data } = await http.post('/create/expense.php', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      const { data } = await http.post('/create/expense', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
       return data
     },
     onSuccess: () => { setError(''); setMessage('Expense saved successfully.'); setTimeout(() => navigate('/expenses'), 600) },

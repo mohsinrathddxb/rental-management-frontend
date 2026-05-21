@@ -13,7 +13,7 @@ import { http } from '../../lib/http'
 import type { DashboardResponse } from '../../lib/types'
 
 async function fetchDashboard() {
-  const { data } = await http.get<DashboardResponse>('/resources/dashboard.php')
+  const { data } = await http.get<DashboardResponse>('/resources/dashboard')
   return data
 }
 

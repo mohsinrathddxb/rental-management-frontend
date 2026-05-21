@@ -21,7 +21,7 @@ export function CreateUserPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const mutation = useMutation({
-    mutationFn: (values: CreateUserValues) => http.post('/create/user.php', values),
+    mutationFn: (values: CreateUserValues) => http.post('/create/user', values),
     onSuccess: () => { setError(''); setMessage('Admin created successfully.'); setTimeout(() => navigate('/users'), 600) },
     onError: (err: unknown) => { setMessage(''); setError(getApiErrorMessage(err, 'Admin could not be created.')) },
   })

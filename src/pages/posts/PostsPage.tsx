@@ -8,7 +8,7 @@ import { http } from '../../lib/http'
 import type { BlogPost, PostsResponse } from '../../lib/types'
 
 async function fetchPosts() {
-  const { data } = await http.get<PostsResponse>('/resources/posts.php')
+  const { data } = await http.get<PostsResponse>('/resources/posts')
   return data
 }
 

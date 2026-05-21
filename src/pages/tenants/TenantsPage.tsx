@@ -20,7 +20,7 @@ import type { TelegramActionResponse, TelegramRecentChat, Tenant, TenantsRespons
 import { useFormOptions } from '../create/useFormOptions'
 
 async function fetchTenants() {
-  const { data } = await http.get<TenantsResponse>('/resources/tenants.php')
+  const { data } = await http.get<TenantsResponse>('/resources/tenants')
   return data
 }
 
@@ -95,7 +95,7 @@ export function TenantsPage() {
 
   const fetchChatIdMutation = useMutation({
     mutationFn: async (tenantId: number) => {
-      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions.php', {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions', {
         tenant_id: tenantId,
         telegram_action: 'fetch_chat_id',
       })
@@ -112,7 +112,7 @@ export function TenantsPage() {
 
   const sendTestMutation = useMutation({
     mutationFn: async (tenantId: number) => {
-      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions.php', {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions', {
         tenant_id: tenantId,
         telegram_action: 'send_test',
       })
@@ -128,7 +128,7 @@ export function TenantsPage() {
 
   const recentChatsMutation = useMutation({
     mutationFn: async (tenantId: number) => {
-      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions.php', {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions', {
         tenant_id: tenantId,
         telegram_action: 'list_recent_chats',
       })
@@ -147,7 +147,7 @@ export function TenantsPage() {
 
   const assignChatMutation = useMutation({
     mutationFn: async (values: { tenant_id: number; chat_id: string; telegram_username?: string }) => {
-      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions.php', {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/tenant-actions', {
         tenant_id: values.tenant_id,
         telegram_action: 'assign_chat_id',
         chat_id: values.chat_id,

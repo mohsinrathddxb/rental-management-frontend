@@ -6,7 +6,7 @@ import { http } from '../../lib/http'
 import type { BlogComment, CommentsResponse } from '../../lib/types'
 
 async function fetchComments() {
-  const { data } = await http.get<CommentsResponse>('/resources/comments.php')
+  const { data } = await http.get<CommentsResponse>('/resources/comments')
   return data
 }
 

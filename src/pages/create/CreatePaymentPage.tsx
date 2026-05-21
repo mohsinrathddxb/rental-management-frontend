@@ -42,7 +42,7 @@ export function CreatePaymentPage() {
       if (!matchedInvoice) {
         throw new Error('Please select a valid invoice before saving the payment.')
       }
-      return http.post('/create/payment.php', {
+      return http.post('/create/payment', {
         ...values,
         tenID: matchedInvoice.tenantID,
       })

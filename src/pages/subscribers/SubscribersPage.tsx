@@ -7,7 +7,7 @@ import { http } from '../../lib/http'
 import type { SubscriberRecord, SubscribersResponse } from '../../lib/types'
 
 async function fetchSubscribers() {
-  const { data } = await http.get<SubscribersResponse>('/resources/subscribers.php')
+  const { data } = await http.get<SubscribersResponse>('/resources/subscribers')
   return data
 }
 

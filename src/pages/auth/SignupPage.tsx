@@ -28,7 +28,7 @@ export function SignupPage() {
     setErrorMessage('')
 
     try {
-      await http.post<ApiMessageResponse>('/auth/signup.php', values)
+      await http.post<ApiMessageResponse>('/auth/signup', values)
       navigate('/login', {
         replace: true,
         state: { successMessage: 'Account created successfully. Please sign in.' },

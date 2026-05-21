@@ -3,7 +3,7 @@ import { http } from '../../lib/http'
 import type { FormOptionsResponse } from '../../lib/types'
 
 async function fetchFormOptions() {
-  const { data } = await http.get<FormOptionsResponse>('/resources/form-options.php')
+  const { data } = await http.get<FormOptionsResponse>('/resources/form-options')
   return data
 }
 

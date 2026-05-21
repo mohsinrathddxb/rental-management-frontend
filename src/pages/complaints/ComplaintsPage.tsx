@@ -10,7 +10,7 @@ import { http } from '../../lib/http'
 import type { Complaint, ComplaintAttachment, ComplaintHistoryEntry, ComplaintsResponse } from '../../lib/types'
 
 async function fetchComplaints() {
-  const { data } = await http.get<ComplaintsResponse>('/resources/complaints.php')
+  const { data } = await http.get<ComplaintsResponse>('/resources/complaints')
   return data
 }
 
@@ -171,7 +171,7 @@ export function ComplaintsPage() {
           formData.append('images[]', file.originFileObj)
         }
       })
-      return http.post('/resources/complaints.php', formData)
+      return http.post('/resources/complaints', formData)
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['complaints'] })
@@ -182,12 +182,12 @@ export function ComplaintsPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: (values: { complaint_id: number; status: string; admin_reason: string }) => http.post('/resources/complaints.php', { action: 'update', ...values }),
+    mutationFn: (values: { complaint_id: number; status: string; admin_reason: string }) => http.post('/resources/complaints', { action: 'update', ...values }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['complaints'] }),
   })
 
   const reopenMutation = useMutation({
-    mutationFn: (complaint_id: number) => http.post('/resources/complaints.php', { action: 'reopen', complaint_id }),
+    mutationFn: (complaint_id: number) => http.post('/resources/complaints', { action: 'reopen', complaint_id }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['complaints'] }),
   })
 

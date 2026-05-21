@@ -8,7 +8,7 @@ import { http } from '../../lib/http'
 import type { NoticesResponse, Notice, TelegramActionResponse } from '../../lib/types'
 
 async function fetchNotices() {
-  const { data } = await http.get<NoticesResponse>('/resources/notices.php')
+  const { data } = await http.get<NoticesResponse>('/resources/notices')
   return data
 }
 
@@ -86,7 +86,7 @@ export function NoticesPage() {
   const queryClient = useQueryClient()
   const { data, isLoading, isError } = useQuery({ queryKey: ['notices'], queryFn: fetchNotices })
   const createMutation = useMutation({
-    mutationFn: (values: Record<string, string>) => http.post('/resources/notices.php', { action: 'create', ...values }),
+    mutationFn: (values: Record<string, string>) => http.post('/resources/notices', { action: 'create', ...values }),
     onSuccess: async () => {
       message.success('Notice created successfully.')
       await queryClient.invalidateQueries({ queryKey: ['notices'] })
@@ -96,7 +96,7 @@ export function NoticesPage() {
     },
   })
   const updateMutation = useMutation({
-    mutationFn: (values: { notice_id: number; status: string; admin_reply: string }) => http.post('/resources/notices.php', { action: 'update', ...values }),
+    mutationFn: (values: { notice_id: number; status: string; admin_reply: string }) => http.post('/resources/notices', { action: 'update', ...values }),
     onSuccess: async () => {
       message.success('Notice updated successfully.')
       await queryClient.invalidateQueries({ queryKey: ['notices'] })
@@ -107,7 +107,7 @@ export function NoticesPage() {
   })
   const telegramMutation = useMutation({
     mutationFn: async (noticeId: number) => {
-      const { data } = await http.post<TelegramActionResponse>('/telegram/notice-actions.php', {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/notice-actions', {
         notice_id: noticeId,
         telegram_action: 'send_notice',
       })

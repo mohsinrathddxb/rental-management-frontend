@@ -14,7 +14,7 @@ import { http } from '../../lib/http'
 import type { Payment, PaymentsResponse, TelegramActionResponse } from '../../lib/types'
 
 async function fetchPayments() {
-  const { data } = await http.get<PaymentsResponse>('/resources/payments.php')
+  const { data } = await http.get<PaymentsResponse>('/resources/payments')
   return data
 }
 
@@ -27,7 +27,7 @@ export function PaymentsPage() {
 
   const telegramMutation = useMutation({
     mutationFn: async (paymentID: number) => {
-      const { data } = await http.post<TelegramActionResponse>('/telegram/payment-actions.php', {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/payment-actions', {
         paymentID,
         telegram_action: 'send_receipt',
       })

@@ -27,7 +27,7 @@ export function VerifyOtpPage() {
     setErrorMessage('')
 
     try {
-      await http.post<ApiMessageResponse>('/auth/forgot-password-verify.php', {
+      await http.post<ApiMessageResponse>('/auth/forgot-password-verify', {
         email,
         otp: values.otp,
       })
@@ -46,7 +46,7 @@ export function VerifyOtpPage() {
     setInfoMessage('')
 
     try {
-      const { data } = await http.post<ApiMessageResponse>('/auth/forgot-password-request.php', {
+      const { data } = await http.post<ApiMessageResponse>('/auth/forgot-password-request', {
         email,
       })
       setInfoMessage(data.message)

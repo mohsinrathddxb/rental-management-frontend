@@ -14,7 +14,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const refreshSession = async () => {
     try {
-      const { data } = await http.get<SessionResponse>('/auth/session.php')
+      const { data } = await http.get<SessionResponse>('/auth/session')
       if (data.authenticated && data.user) {
         setUser(data.user)
       } else {
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     let isActive = true
 
     http
-      .get<SessionResponse>('/auth/session.php')
+      .get<SessionResponse>('/auth/session')
       .then(({ data }) => {
         if (!isActive) return
         if (data.authenticated && data.user) {
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const login = async (payload: LoginPayload) => {
     const identifier = payload.identifier.trim()
-    const { data } = await http.post<LoginResponse>('/auth/login.php', {
+    const { data } = await http.post<LoginResponse>('/auth/login', {
       email: identifier,
       uname: identifier,
       password: payload.password,
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }
 
   const logout = async () => {
-    await http.post('/auth/logout.php')
+    await http.post('/auth/logout')
     setUser(null)
   }
 

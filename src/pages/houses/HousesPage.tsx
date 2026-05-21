@@ -16,7 +16,7 @@ import { http } from '../../lib/http'
 import type { House, HousesResponse } from '../../lib/types'
 
 async function fetchHouses() {
-  const { data } = await http.get<HousesResponse>('/resources/houses.php')
+  const { data } = await http.get<HousesResponse>('/resources/houses')
   return data
 }
 

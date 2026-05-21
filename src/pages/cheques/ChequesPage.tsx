@@ -11,7 +11,7 @@ import { http } from '../../lib/http'
 import type { ChequesResponse, LandlordCheque, LandlordChequeEvent } from '../../lib/types'
 
 async function fetchCheques() {
-  const { data } = await http.get<ChequesResponse>('/resources/cheques.php')
+  const { data } = await http.get<ChequesResponse>('/resources/cheques')
   return data
 }
 
@@ -109,7 +109,7 @@ export function ChequesPage() {
   }
 
   const rescheduleMutation = useMutation({
-    mutationFn: (values: RescheduleValues) => http.post('/resources/cheques.php', {
+    mutationFn: (values: RescheduleValues) => http.post('/resources/cheques', {
       action: 'reschedule',
       cheque_id: rescheduleTarget?.cheque_id,
       ...values,
@@ -125,7 +125,7 @@ export function ChequesPage() {
   })
 
   const paidMutation = useMutation({
-    mutationFn: (values: PaidValues) => http.post('/resources/cheques.php', {
+    mutationFn: (values: PaidValues) => http.post('/resources/cheques', {
       action: 'mark_paid',
       cheque_id: paidTarget?.cheque_id,
       ...values,
@@ -141,7 +141,7 @@ export function ChequesPage() {
   })
 
   const bounceMutation = useMutation({
-    mutationFn: (values: BounceValues) => http.post('/resources/cheques.php', {
+    mutationFn: (values: BounceValues) => http.post('/resources/cheques', {
       action: 'mark_bounced',
       cheque_id: bounceTarget?.cheque_id,
       ...values,

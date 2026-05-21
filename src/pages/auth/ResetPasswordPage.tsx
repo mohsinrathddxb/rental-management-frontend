@@ -26,7 +26,7 @@ export function ResetPasswordPage() {
     setErrorMessage('')
 
     try {
-      await http.post<ApiMessageResponse>('/auth/reset-password.php', {
+      await http.post<ApiMessageResponse>('/auth/reset-password', {
         email,
         ...values,
       })

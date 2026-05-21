@@ -19,7 +19,7 @@ export function ForgotPasswordPage() {
     setErrorMessage('')
 
     try {
-      await http.post<ApiMessageResponse>('/auth/forgot-password-request.php', values)
+      await http.post<ApiMessageResponse>('/auth/forgot-password-request', values)
       navigate(`/forgot-password/verify?email=${encodeURIComponent(values.email)}`, {
         replace: true,
       })

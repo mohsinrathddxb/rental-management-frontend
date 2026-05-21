@@ -8,7 +8,7 @@ import { http } from '../../lib/http'
 import type { AdminUserRow, UsersResponse } from '../../lib/types'
 
 async function fetchUsers() {
-  const { data } = await http.get<UsersResponse>('/resources/users.php')
+  const { data } = await http.get<UsersResponse>('/resources/users')
   return data
 }
 

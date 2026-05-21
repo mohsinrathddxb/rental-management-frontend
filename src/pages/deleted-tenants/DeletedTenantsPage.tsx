@@ -6,7 +6,7 @@ import { http } from '../../lib/http'
 import type { DeletedTenant, DeletedTenantsResponse } from '../../lib/types'
 
 async function fetchDeletedTenants() {
-  const { data } = await http.get<DeletedTenantsResponse>('/resources/deleted-tenants.php')
+  const { data } = await http.get<DeletedTenantsResponse>('/resources/deleted-tenants')
   return data
 }
 

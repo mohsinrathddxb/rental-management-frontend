@@ -16,12 +16,12 @@ export function CreateLocationPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const createMutation = useMutation({
-    mutationFn: (values: CreateLocationValues) => http.post('/create/location.php', values),
+    mutationFn: (values: CreateLocationValues) => http.post('/create/location', values),
     onSuccess: async () => { setError(''); setMessage('Location created successfully.'); await queryClient.invalidateQueries({ queryKey: ['form-options'] }) },
     onError: (err: unknown) => { setMessage(''); setError(getApiErrorMessage(err, 'Location could not be created.')) },
   })
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => http.delete(`/create/location.php?id=${id}`),
+    mutationFn: (id: number) => http.delete(`/create/location?id=${id}`),
     onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['form-options'] }) },
   })
   if (isLoading) return <Card><div className="page-loader"><Spin size="large" /></div></Card>

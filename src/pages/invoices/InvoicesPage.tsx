@@ -15,7 +15,7 @@ import { http } from '../../lib/http'
 import type { Invoice, InvoicesResponse, TelegramActionResponse } from '../../lib/types'
 
 async function fetchInvoices() {
-  const { data } = await http.get<InvoicesResponse>('/resources/invoices.php')
+  const { data } = await http.get<InvoicesResponse>('/resources/invoices')
   return data
 }
 
@@ -35,7 +35,7 @@ export function InvoicesPage() {
 
   const telegramMutation = useMutation({
     mutationFn: async (invoiceNumber: string) => {
-      const { data } = await http.post<TelegramActionResponse>('/telegram/invoice-actions.php', {
+      const { data } = await http.post<TelegramActionResponse>('/telegram/invoice-actions', {
         invoiceNumber,
         telegram_action: 'send_invoice',
       })

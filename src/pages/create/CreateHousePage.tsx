@@ -33,7 +33,7 @@ export function CreateHousePage() {
       ;(values.house_photos ?? []).forEach((file) => {
         if (file.originFileObj) formData.append('house_photos[]', file.originFileObj)
       })
-      const { data } = await http.post('/create/house.php', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      const { data } = await http.post('/create/house', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
       return data
     },
     onSuccess: () => {

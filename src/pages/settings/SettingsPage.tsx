@@ -8,7 +8,7 @@ export function SettingsPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const mutation = useMutation({
-    mutationFn: (values: { password: string; password2: string }) => http.post('/auth/change-password.php', values),
+    mutationFn: (values: { password: string; password2: string }) => http.post('/auth/change-password', values),
     onSuccess: () => {
       setError('')
       setMessage('Password updated successfully.')

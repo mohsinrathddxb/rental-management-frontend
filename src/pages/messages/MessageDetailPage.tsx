@@ -8,7 +8,7 @@ import { http } from '../../lib/http'
 import type { MessageResponse } from '../../lib/types'
 
 async function fetchMessage(id: string) {
-  const { data } = await http.get<MessageResponse>(`/resources/message.php?id=${id}`)
+  const { data } = await http.get<MessageResponse>(`/resources/message?id=${id}`)
   return data
 }
 
@@ -24,7 +24,7 @@ export function MessageDetailPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: () => http.post('/resources/message.php', { id: Number(id) }),
+    mutationFn: () => http.post('/resources/message', { id: Number(id) }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['messages'] })
       navigate('/messages', { replace: true })

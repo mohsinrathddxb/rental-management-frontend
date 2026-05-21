@@ -38,7 +38,7 @@ import { useFormOptions } from '../create/useFormOptions'
 
 async function fetchPartitions(houseId: string | null) {
   const search = houseId ? `?house_id=${encodeURIComponent(houseId)}` : ''
-  const { data } = await http.get<PartitionsResponse>(`/resources/partitions.php${search}`)
+  const { data } = await http.get<PartitionsResponse>(`/resources/partitions${search}`)
   return data
 }
 

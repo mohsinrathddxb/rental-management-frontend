@@ -49,7 +49,7 @@ export function CreatePartitionPage() {
           formData.append('house_photos[]', file.originFileObj)
         }
       })
-      const { data: response } = await http.post('/create/partition.php', formData, {
+      const { data: response } = await http.post('/create/partition', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       return response

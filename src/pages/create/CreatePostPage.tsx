@@ -17,7 +17,7 @@ export function CreatePostPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const mutation = useMutation({
-    mutationFn: (values: CreatePostValues) => http.post('/create/post.php', values),
+    mutationFn: (values: CreatePostValues) => http.post('/create/post', values),
     onSuccess: () => { setError(''); setMessage('Post created successfully.'); setTimeout(() => navigate('/posts'), 600) },
     onError: (err: unknown) => { setMessage(''); setError(getApiErrorMessage(err, 'Post could not be created.')) },
   })

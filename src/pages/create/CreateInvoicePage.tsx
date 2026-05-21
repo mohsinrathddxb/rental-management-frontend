@@ -23,7 +23,7 @@ export function CreateInvoicePage() {
   const [error, setError] = useState('')
   const [selectedTenantId, setSelectedTenantId] = useState<number>()
   const mutation = useMutation({
-    mutationFn: (values: CreateInvoiceValues) => http.post('/create/invoice.php', values),
+    mutationFn: (values: CreateInvoiceValues) => http.post('/create/invoice', values),
     onSuccess: () => { setError(''); setMessage('Invoice created successfully.'); setTimeout(() => navigate('/invoices'), 600) },
     onError: (err: unknown) => { setMessage(''); setError(getApiErrorMessage(err, 'Invoice could not be created.')) },
   })

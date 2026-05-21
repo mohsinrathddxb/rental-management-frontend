@@ -8,7 +8,7 @@ import { http } from '../../lib/http'
 import type { MessageRecord, MessagesResponse } from '../../lib/types'
 
 async function fetchMessages() {
-  const { data } = await http.get<MessagesResponse>('/resources/messages.php')
+  const { data } = await http.get<MessagesResponse>('/resources/messages')
   return data
 }
 

@@ -25,7 +25,7 @@ export function CreateChequePage() {
   const [error, setError] = useState('')
 
   const mutation = useMutation({
-    mutationFn: (values: CreateChequeValues) => http.post('/create/cheque.php', values),
+    mutationFn: (values: CreateChequeValues) => http.post('/create/cheque', values),
     onSuccess: () => {
       setError('')
       setMessage('Cheque plan created successfully.')

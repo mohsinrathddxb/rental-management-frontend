@@ -7,6 +7,7 @@ export type TenantSummary = {
 }
 
 export type AuthUser = {
+  owner_id?: number | null
   email: string
   name: string
   role: string
@@ -517,6 +518,7 @@ export type SubscribersResponse = {
 
 export type AdminUserRow = {
   id: number
+  owner_id?: number | null
   name: string
   email: string
   date: string

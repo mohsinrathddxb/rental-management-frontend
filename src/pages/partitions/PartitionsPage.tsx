@@ -12,7 +12,6 @@ import {
   Button,
   Card,
   Checkbox,
-  Col,
   Empty,
   Form,
   Image,
@@ -20,7 +19,6 @@ import {
   InputNumber,
   Modal,
   Popconfirm,
-  Row,
   Select,
   Space,
   Spin,
@@ -50,7 +48,7 @@ function partitionSortValue(status: string) {
   return status.toLowerCase() === 'vacant' ? 0 : 1
 }
 
-function PartitionCard({
+function PartitionListRow({
   partition,
   onPreview,
   onAddTenant,
@@ -68,23 +66,30 @@ function PartitionCard({
   canAddTenant: boolean
 }) {
   return (
-    <Card className="partition-card">
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+    <div
+      style={{
+        border: '1px solid #ead9a3',
+        borderRadius: 16,
+        padding: 14,
+        background: '#fffdfa',
+      }}
+    >
+      <Space direction="vertical" size={10} style={{ width: '100%' }}>
         <Space wrap size="small" style={{ justifyContent: 'space-between', width: '100%' }}>
-          <div>
-            <Typography.Title level={4} style={{ margin: 0 }}>
+          <Space direction="vertical" size={0}>
+            <Typography.Text strong style={{ fontSize: 18 }}>
               {partition.partition_number}
-            </Typography.Title>
-            <Typography.Text type="secondary">
-              {partition.house_name || 'Unknown house'}
             </Typography.Text>
-          </div>
+            <Typography.Text type="secondary">
+              {partition.description || 'No description added.'}
+            </Typography.Text>
+          </Space>
           <Tag color={partitionStatusColor(partition.partition_status)}>
             {partition.partition_status}
           </Tag>
         </Space>
 
-        <Space wrap size="small">
+        <Space wrap size={[8, 8]}>
           <Tag icon={<EnvironmentOutlined />}>{partition.location || 'No location'}</Tag>
           <Tag color="gold">AED {partition.rent_amount.toLocaleString()}</Tag>
           {partition.photo_count > 0 ? (
@@ -107,15 +112,7 @@ function PartitionCard({
           )}
         </Space>
 
-        {partition.description ? (
-          <Typography.Paragraph style={{ marginBottom: 0 }}>
-            {partition.description}
-          </Typography.Paragraph>
-        ) : (
-          <Typography.Text type="secondary">No description added.</Typography.Text>
-        )}
-
-        <Space wrap size={[8, 8]}>
+        <Space wrap size={[6, 6]}>
           {partition.facilities.length > 0 ? (
             partition.facilities.map((facility) => (
               <Tag key={`${partition.partition_id}-${facility}`} color="blue">
@@ -127,14 +124,14 @@ function PartitionCard({
           )}
         </Space>
 
-        <Space wrap>
+        <Space wrap size="small">
           {canAddTenant ? (
-            <Button onClick={() => onAddTenant(partition)} type="primary">
+            <Button onClick={() => onAddTenant(partition)} size="small" type="primary">
               Add Tenant
             </Button>
           ) : null}
           {canManage ? (
-            <Button icon={<EditOutlined />} onClick={() => onEdit(partition)}>
+            <Button icon={<EditOutlined />} onClick={() => onEdit(partition)} size="small">
               Edit
             </Button>
           ) : null}
@@ -145,14 +142,14 @@ function PartitionCard({
               title="Delete this partition?"
               description="This works only if the partition has no active tenant."
             >
-              <Button danger icon={<DeleteOutlined />}>
+              <Button danger icon={<DeleteOutlined />} size="small">
                 Delete
               </Button>
             </Popconfirm>
           ) : null}
         </Space>
       </Space>
-    </Card>
+    </div>
   )
 }
 
@@ -287,37 +284,40 @@ export function PartitionsPage() {
             <Card
               key={group.houseName}
               title={group.houseName}
-              extra={<Typography.Text type="secondary">{group.partitions.length} partitions</Typography.Text>}
+              extra={
+                <Typography.Text type="secondary">
+                  {group.partitions.filter((partition) => partition.partition_status.toLowerCase() === 'vacant').length} vacant / {group.partitions.length} total
+                </Typography.Text>
+              }
             >
-              <Row gutter={[18, 18]}>
+              <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                 {group.partitions.map((partition) => (
-                  <Col key={partition.partition_id} xs={24} md={12} xl={8}>
-                    <PartitionCard
-                      onAddTenant={(partition) =>
-                        navigate(`/create/tenant?house_id=${encodeURIComponent(String(partition.house_id))}&partition_id=${encodeURIComponent(String(partition.partition_id))}`)
-                      }
-                      canManage={!!data.canManage}
-                      canAddTenant={!!data.canManage && partition.partition_status.toLowerCase() === 'vacant'}
-                      onDelete={(partition) => deleteMutation.mutate(partition.partition_id)}
-                      onEdit={(partition) => {
-                        setEditingPartition(partition)
-                        form.setFieldsValue({
-                          partition_number: partition.partition_number,
-                          rent_amount: partition.rent_amount,
-                          partition_status: partition.partition_status,
-                          description: partition.description,
-                          facilities: partition.facilities,
-                        })
-                      }}
-                      onPreview={(title, images) => {
-                        setPreviewTitle(title)
-                        setPreviewImages(images)
-                      }}
-                      partition={partition}
-                    />
-                  </Col>
+                  <PartitionListRow
+                    key={partition.partition_id}
+                    onAddTenant={(partition) =>
+                      navigate(`/create/tenant?house_id=${encodeURIComponent(String(partition.house_id))}&partition_id=${encodeURIComponent(String(partition.partition_id))}`)
+                    }
+                    canManage={!!data.canManage}
+                    canAddTenant={!!data.canManage && partition.partition_status.toLowerCase() === 'vacant'}
+                    onDelete={(partition) => deleteMutation.mutate(partition.partition_id)}
+                    onEdit={(partition) => {
+                      setEditingPartition(partition)
+                      form.setFieldsValue({
+                        partition_number: partition.partition_number,
+                        rent_amount: partition.rent_amount,
+                        partition_status: partition.partition_status,
+                        description: partition.description,
+                        facilities: partition.facilities,
+                      })
+                    }}
+                    onPreview={(title, images) => {
+                      setPreviewTitle(title)
+                      setPreviewImages(images)
+                    }}
+                    partition={partition}
+                  />
                 ))}
-              </Row>
+              </Space>
             </Card>
           ))}
         </Space>

@@ -39,10 +39,20 @@ export function TenantsPage() {
   })
 
   const selectedHouseId = Form.useWatch('house_id', form)
-  const partitionOptions = useMemo(() => {
+  const editablePartitionOptions = useMemo(() => {
     const houseId = Number(selectedHouseId || 0)
-    return (formOptions?.partitions ?? []).filter((partition) => partition.house_id === houseId)
-  }, [formOptions?.partitions, selectedHouseId])
+    const currentPartitionId = Number(editingTenant?.partition_id ?? 0)
+
+    return (formOptions?.expense_partitions ?? []).filter((partition) => {
+      if (partition.house_id !== houseId) {
+        return false
+      }
+
+      const isCurrentPartition = partition.partition_id === currentPartitionId
+      const isVacant = String(partition.partition_status ?? '').toLowerCase() === 'vacant'
+      return isVacant || isCurrentPartition
+    })
+  }, [editingTenant?.partition_id, formOptions?.expense_partitions, selectedHouseId])
 
   const updateTenantMutation = useMutation({
     mutationFn: async (values: any) => {
@@ -393,7 +403,15 @@ export function TenantsPage() {
             <Select options={(formOptions?.houses ?? []).map((house) => ({ label: house.house_name, value: house.houseID }))} />
           </Form.Item>
           <Form.Item label="Partition" name="partition_id" rules={[{ required: true }]}>
-            <Select options={partitionOptions.map((partition) => ({ label: `${partition.house_name} - ${partition.partition_number} (${partition.partition_status})`, value: partition.partition_id }))} />
+            <Select
+              options={editablePartitionOptions.map((partition) => {
+                const isCurrentPartition = partition.partition_id === editingTenant?.partition_id
+                return {
+                  label: `${partition.house_name} - ${partition.partition_number} (${isCurrentPartition ? 'Current' : partition.partition_status})`,
+                  value: partition.partition_id,
+                }
+              })}
+            />
           </Form.Item>
           <Form.Item label="Tenant Name" name="tname" rules={[{ required: true }]}>
             <Input />

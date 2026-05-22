@@ -52,6 +52,11 @@ function isHouseGroupRow(record: ChequeTableRow): record is ChequeHouseGroup {
   return 'isGroup' in record && record.isGroup === true
 }
 
+function formatAed(value: unknown) {
+  const amount = Number(value ?? 0)
+  return `AED ${amount.toLocaleString()}`
+}
+
 function chequeStatusTag(status: string) {
   const normalized = status.toLowerCase()
   if (normalized === 'paid') return <Tag color="success">Paid</Tag>
@@ -230,15 +235,16 @@ export function ChequesPage() {
           return (
             <Space direction="vertical" size={0}>
               <Typography.Text strong>AED {record.total_amount.toLocaleString()}</Typography.Text>
-              <Typography.Text type="secondary">Remaining: AED {record.remaining_amount.toLocaleString()}</Typography.Text>
+              <Typography.Text strong>{formatAed(record.total_amount)}</Typography.Text>
+              <Typography.Text type="secondary">Remaining: {formatAed(record.remaining_amount)}</Typography.Text>
             </Space>
           )
         }
 
         return (
           <Space direction="vertical" size={0}>
-            <Typography.Text strong>AED {record.amount.toLocaleString()}</Typography.Text>
-            <Typography.Text type="secondary">Remaining: AED {record.remaining_amount.toLocaleString()}</Typography.Text>
+            <Typography.Text strong>{formatAed(record.amount)}</Typography.Text>
+            <Typography.Text type="secondary">Remaining: {formatAed(record.remaining_amount)}</Typography.Text>
           </Space>
         )
       },
@@ -376,13 +382,13 @@ export function ChequesPage() {
         <>
           <Row gutter={[16, 16]}>
             <Col xs={24} md={8}>
-              <Card><Statistic title="Coming Cheques" value={data.summary.coming_count} suffix={`| AED ${data.summary.total_coming_amount.toLocaleString()}`} /></Card>
+              <Card><Statistic title="Coming Cheques" value={data.summary.coming_count} suffix={`| ${formatAed(data.summary.total_coming_amount)}`} /></Card>
             </Col>
             <Col xs={24} md={8}>
-              <Card><Statistic title="Remaining Cheques" value={data.summary.remaining_count} suffix={`| AED ${data.summary.total_remaining_amount.toLocaleString()}`} /></Card>
+              <Card><Statistic title="Remaining Cheques" value={data.summary.remaining_count} suffix={`| ${formatAed(data.summary.total_remaining_amount)}`} /></Card>
             </Col>
             <Col xs={24} md={8}>
-              <Card><Statistic title="Paid Cheques" value={data.summary.paid_count} suffix={`| AED ${data.summary.total_paid_amount.toLocaleString()}`} /></Card>
+              <Card><Statistic title="Paid Cheques" value={data.summary.paid_count} suffix={`| ${formatAed(data.summary.total_paid_amount)}`} /></Card>
             </Col>
           </Row>
 

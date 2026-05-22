@@ -25,6 +25,7 @@ import { MessagesPage } from '../pages/messages/MessagesPage'
 import { MessageDetailPage } from '../pages/messages/MessageDetailPage'
 import { SubscribersPage } from '../pages/subscribers/SubscribersPage'
 import { UsersPage } from '../pages/users/UsersPage'
+import { OwnersPage } from '../pages/owners/OwnersPage'
 import { SettingsPage } from '../pages/settings/SettingsPage'
 import { ToolsPage } from '../pages/tools/ToolsPage'
 import { CreateHousePage } from '../pages/create/CreateHousePage'
@@ -115,6 +116,24 @@ function AdminOnlyRoute({ children }: { children: ReactElement }) {
   return children
 }
 
+function PlatformAdminRoute({ children }: { children: ReactElement }) {
+  const { isLoading, user } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="page-loader">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (!user?.isPlatformAdmin) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return children
+}
+
 export function AppRouter() {
   return (
     <BrowserRouter>
@@ -144,6 +163,7 @@ export function AppRouter() {
           <Route path="/messages/:id" element={<AdminOnlyRoute><MessageDetailPage /></AdminOnlyRoute>} />
           <Route path="/subscribers" element={<AdminOnlyRoute><SubscribersPage /></AdminOnlyRoute>} />
           <Route path="/users" element={<AdminOnlyRoute><UsersPage /></AdminOnlyRoute>} />
+          <Route path="/owners" element={<PlatformAdminRoute><OwnersPage /></PlatformAdminRoute>} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/tools" element={<AdminOnlyRoute><ToolsPage /></AdminOnlyRoute>} />
           <Route path="/create/house" element={<AdminOnlyRoute><CreateHousePage /></AdminOnlyRoute>} />

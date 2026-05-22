@@ -83,6 +83,7 @@ function getMenuState(pathname: string) {
     '/messages': 'audience',
     '/subscribers': 'audience',
     '/users': 'accounts',
+    '/owners': 'accounts',
     '/create/user': 'accounts',
   }
 
@@ -99,7 +100,12 @@ function getMenuState(pathname: string) {
   }
 }
 
-function buildMenuItems(isAdmin: boolean, isTenant: boolean, onNavigate?: () => void) {
+function buildMenuItems(
+  isAdmin: boolean,
+  isTenant: boolean,
+  isPlatformAdmin: boolean,
+  onNavigate?: () => void,
+) {
   const housesChildren: AppMenuItem[] = []
 
   if (isAdmin) {
@@ -202,6 +208,7 @@ function buildMenuItems(isAdmin: boolean, isTenant: boolean, onNavigate?: () => 
     otherItems.push(
       menuItem('accounts', 'Accounts', <UserOutlined />, [
         menuItem('/users', navLink('/users', 'Administrators', onNavigate)),
+        ...(isPlatformAdmin ? [menuItem('/owners', navLink('/owners', 'Owners', onNavigate))] : []),
         menuItem('/create/user', navLink('/create/user', 'Create Admin', onNavigate)),
       ]),
       menuItem('/tools', navLink('/tools', 'Tools', onNavigate), <AppstoreOutlined />),
@@ -219,7 +226,12 @@ function NavigationMenu({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const { user } = useAuth()
   const { selectedKeys, defaultOpenKeys } = getMenuState(location.pathname)
-  const items = buildMenuItems(Boolean(user?.isAdmin), Boolean(user?.isTenant), onNavigate)
+  const items = buildMenuItems(
+    Boolean(user?.isAdmin),
+    Boolean(user?.isTenant),
+    Boolean(user?.isPlatformAdmin),
+    onNavigate,
+  )
 
   return (
     <Menu

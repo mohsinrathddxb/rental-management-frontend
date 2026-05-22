@@ -8,6 +8,7 @@ export type TenantSummary = {
 
 export type AuthUser = {
   owner_id?: number | null
+  isPlatformAdmin?: boolean
   email: string
   name: string
   role: string
@@ -519,6 +520,8 @@ export type SubscribersResponse = {
 export type AdminUserRow = {
   id: number
   owner_id?: number | null
+  owner_name?: string
+  is_platform_admin?: boolean
   name: string
   email: string
   date: string
@@ -528,6 +531,25 @@ export type AdminUserRow = {
 export type UsersResponse = {
   ok: boolean
   items: AdminUserRow[]
+}
+
+export type OwnerRecord = {
+  owner_id: number
+  owner_name: string
+  contact_email: string
+  contact_phone: string
+  notes: string
+  status: string
+  created_at: string
+  updated_at: string
+  house_count: number
+  admin_count: number
+  tenant_count: number
+}
+
+export type OwnersResponse = {
+  ok: boolean
+  items: OwnerRecord[]
 }
 
 export type CountryRecord = {

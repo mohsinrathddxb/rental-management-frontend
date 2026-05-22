@@ -11,7 +11,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Card, Form, Input, Modal, Select, Space, Spin, Table, Tag, Tooltip, Typography, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { getApiErrorMessage } from '../../lib/api-errors'
@@ -53,6 +53,21 @@ export function TenantsPage() {
       return isVacant || isCurrentPartition
     })
   }, [editingTenant?.partition_id, formOptions?.expense_partitions, selectedHouseId])
+
+  useEffect(() => {
+    if (!editingTenant) return
+
+    const selectedPartitionId = Number(form.getFieldValue('partition_id') || 0)
+    if (!selectedPartitionId) return
+
+    const isStillValid = editablePartitionOptions.some(
+      (partition) => partition.partition_id === selectedPartitionId,
+    )
+
+    if (!isStillValid) {
+      form.setFieldValue('partition_id', undefined)
+    }
+  }, [editablePartitionOptions, editingTenant, form])
 
   const updateTenantMutation = useMutation({
     mutationFn: async (values: any) => {
@@ -400,7 +415,12 @@ export function TenantsPage() {
       >
         <Form form={form} layout="vertical" onFinish={(values) => updateTenantMutation.mutate(values)}>
           <Form.Item label="House" name="house_id" rules={[{ required: true }]}>
-            <Select options={(formOptions?.houses ?? []).map((house) => ({ label: house.house_name, value: house.houseID }))} />
+            <Select
+              options={(formOptions?.houses ?? []).map((house) => ({
+                label: house.house_name,
+                value: house.houseID,
+              }))}
+            />
           </Form.Item>
           <Form.Item label="Partition" name="partition_id" rules={[{ required: true }]}>
             <Select

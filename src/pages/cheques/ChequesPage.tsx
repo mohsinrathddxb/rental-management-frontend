@@ -108,6 +108,7 @@ export function ChequesPage() {
   const [paidTarget, setPaidTarget] = useState<LandlordCheque | null>(null)
   const [bounceTarget, setBounceTarget] = useState<LandlordCheque | null>(null)
   const [pageError, setPageError] = useState('')
+  const isPaidEntryModal = paidTarget?.status?.toLowerCase() === 'paid'
 
   const refreshCheques = async () => {
     await queryClient.invalidateQueries({ queryKey: ['cheques'] })
@@ -131,7 +132,7 @@ export function ChequesPage() {
 
   const paidMutation = useMutation({
     mutationFn: (values: PaidValues) => http.post('/resources/cheques', {
-      action: 'mark_paid',
+      action: paidTarget?.status?.toLowerCase() === 'paid' ? 'update_paid' : 'mark_paid',
       cheque_id: paidTarget?.cheque_id,
       ...values,
     }),
@@ -307,17 +308,27 @@ export function ChequesPage() {
           return <Typography.Text type="secondary">Expand this house to manage entries</Typography.Text>
         }
 
+        const isPaid = record.status.toLowerCase() === 'paid'
+
         return (
           <Space wrap>
-            <Button icon={<EditOutlined />} onClick={() => setRescheduleTarget(record)} size="small">
-              Reschedule
-            </Button>
-            <Button onClick={() => setPaidTarget(record)} size="small" type="primary">
-              Record Payment
-            </Button>
-            <Button danger icon={<CloseCircleOutlined />} onClick={() => setBounceTarget(record)} size="small">
-              Mark Bounced
-            </Button>
+            {isPaid ? (
+              <Button icon={<EditOutlined />} onClick={() => setPaidTarget(record)} size="small">
+                Edit
+              </Button>
+            ) : (
+              <>
+                <Button icon={<EditOutlined />} onClick={() => setRescheduleTarget(record)} size="small">
+                  Reschedule
+                </Button>
+                <Button onClick={() => setPaidTarget(record)} size="small" type="primary">
+                  Record Payment
+                </Button>
+                <Button danger icon={<CloseCircleOutlined />} onClick={() => setBounceTarget(record)} size="small">
+                  Mark Bounced
+                </Button>
+              </>
+            )}
           </Space>
         )
       },
@@ -480,7 +491,7 @@ export function ChequesPage() {
         footer={null}
         onCancel={() => setPaidTarget(null)}
         open={Boolean(paidTarget)}
-        title="Add Paid Cheque Entry"
+        title={isPaidEntryModal ? 'Edit Paid Cheque Entry' : 'Add Paid Cheque Entry'}
       >
         <Form<PaidValues>
           layout="vertical"
@@ -514,7 +525,7 @@ export function ChequesPage() {
             <Input.TextArea rows={4} placeholder="Optional paid-entry notes" />
           </Form.Item>
           <Button htmlType="submit" loading={paidMutation.isPending} type="primary">
-            Save Payment
+            {isPaidEntryModal ? 'Save Changes' : 'Save Payment'}
           </Button>
         </Form>
       </Modal>

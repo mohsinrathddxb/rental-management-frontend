@@ -2,6 +2,7 @@ import {
   PlusCircleOutlined,
   CameraOutlined,
   DeleteOutlined,
+  DownOutlined,
   EnvironmentOutlined,
   EditOutlined,
   PlusOutlined,
@@ -161,6 +162,7 @@ export function PartitionsPage() {
   const [previewTitle, setPreviewTitle] = useState('')
   const [previewImages, setPreviewImages] = useState<string[]>([])
   const [editingPartition, setEditingPartition] = useState<Partition | null>(null)
+  const [expandedHouses, setExpandedHouses] = useState<string[]>([])
   const [searchParams] = useSearchParams()
   const houseId = searchParams.get('house_id')
   const { data, isLoading, isError } = useQuery({
@@ -191,6 +193,14 @@ export function PartitionsPage() {
       }))
       .sort((left, right) => left.houseName.localeCompare(right.houseName, undefined, { sensitivity: 'base' }))
   })()
+
+  const toggleHouseGroup = (houseName: string) => {
+    setExpandedHouses((current) =>
+      current.includes(houseName)
+        ? current.filter((value) => value !== houseName)
+        : [...current, houseName],
+    )
+  }
 
   const updateMutation = useMutation({
     mutationFn: async (values: any) => {
@@ -283,41 +293,86 @@ export function PartitionsPage() {
           {groupedPartitions.map((group) => (
             <Card
               key={group.houseName}
-              title={group.houseName}
-              extra={
-                <Typography.Text type="secondary">
-                  {group.partitions.filter((partition) => partition.partition_status.toLowerCase() === 'vacant').length} vacant / {group.partitions.length} total
-                </Typography.Text>
-              }
+              bodyStyle={{ padding: 0 }}
             >
-              <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                {group.partitions.map((partition) => (
-                  <PartitionListRow
-                    key={partition.partition_id}
-                    onAddTenant={(partition) =>
-                      navigate(`/create/tenant?house_id=${encodeURIComponent(String(partition.house_id))}&partition_id=${encodeURIComponent(String(partition.partition_id))}`)
-                    }
-                    canManage={!!data.canManage}
-                    canAddTenant={!!data.canManage && partition.partition_status.toLowerCase() === 'vacant'}
-                    onDelete={(partition) => deleteMutation.mutate(partition.partition_id)}
-                    onEdit={(partition) => {
-                      setEditingPartition(partition)
-                      form.setFieldsValue({
-                        partition_number: partition.partition_number,
-                        rent_amount: partition.rent_amount,
-                        partition_status: partition.partition_status,
-                        description: partition.description,
-                        facilities: partition.facilities,
-                      })
-                    }}
-                    onPreview={(title, images) => {
-                      setPreviewTitle(title)
-                      setPreviewImages(images)
-                    }}
-                    partition={partition}
-                  />
-                ))}
-              </Space>
+              <button
+                onClick={() => toggleHouseGroup(group.houseName)}
+                style={{
+                  alignItems: 'center',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '18px 20px',
+                  textAlign: 'left',
+                  width: '100%',
+                }}
+                type="button"
+              >
+                <Space direction="vertical" size={2}>
+                  <Typography.Text strong style={{ fontSize: 18 }}>
+                    {group.houseName}
+                  </Typography.Text>
+                  <Typography.Text type="secondary">
+                    {
+                      group.partitions.filter(
+                        (partition) => partition.partition_status.toLowerCase() === 'vacant',
+                      ).length
+                    }{' '}
+                    vacant / {group.partitions.length} total
+                  </Typography.Text>
+                </Space>
+
+                <DownOutlined
+                  style={{
+                    color: '#8c6d1f',
+                    fontSize: 16,
+                    transform: expandedHouses.includes(group.houseName)
+                      ? 'rotate(180deg)'
+                      : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                  }}
+                />
+              </button>
+
+              {expandedHouses.includes(group.houseName) ? (
+                <div style={{ padding: '0 20px 20px' }}>
+                  <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                    {group.partitions.map((partition) => (
+                      <PartitionListRow
+                        key={partition.partition_id}
+                        onAddTenant={(partition) =>
+                          navigate(
+                            `/create/tenant?house_id=${encodeURIComponent(String(partition.house_id))}&partition_id=${encodeURIComponent(String(partition.partition_id))}`,
+                          )
+                        }
+                        canManage={!!data.canManage}
+                        canAddTenant={
+                          !!data.canManage &&
+                          partition.partition_status.toLowerCase() === 'vacant'
+                        }
+                        onDelete={(partition) => deleteMutation.mutate(partition.partition_id)}
+                        onEdit={(partition) => {
+                          setEditingPartition(partition)
+                          form.setFieldsValue({
+                            partition_number: partition.partition_number,
+                            rent_amount: partition.rent_amount,
+                            partition_status: partition.partition_status,
+                            description: partition.description,
+                            facilities: partition.facilities,
+                          })
+                        }}
+                        onPreview={(title, images) => {
+                          setPreviewTitle(title)
+                          setPreviewImages(images)
+                        }}
+                        partition={partition}
+                      />
+                    ))}
+                  </Space>
+                </div>
+              ) : null}
             </Card>
           ))}
         </Space>

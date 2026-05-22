@@ -24,6 +24,7 @@ type RescheduleValues = {
 type PaidValues = {
   paid_amount: number
   paid_date: string
+  paid_for_month: string
   payment_mode: 'Cheque' | 'Cash' | 'Bank Transfer' | 'Other'
   cheque_number?: string
   payment_reference?: string
@@ -55,6 +56,14 @@ function isHouseGroupRow(record: ChequeTableRow): record is ChequeHouseGroup {
 function formatAed(value: unknown) {
   const amount = Number(value ?? 0)
   return `AED ${amount.toLocaleString()}`
+}
+
+function formatChequeMonth(value: unknown) {
+  const normalized = String(value ?? '').trim()
+  if (!/^\d{4}-\d{2}$/.test(normalized)) {
+    return '-'
+  }
+  return dayjs(`${normalized}-01`).format('MMM YYYY')
 }
 
 function chequeStatusTag(status: string) {
@@ -281,6 +290,42 @@ export function ChequesPage() {
       },
     },
     {
+      title: 'Paid For Month',
+      key: 'paid_for_month',
+      render: (_, record) => {
+        if (isHouseGroupRow(record)) {
+          const paidMonths = Array.from(
+            new Set(
+              record.children
+                .map((item) => item.paid_for_month)
+                .filter((value) => /^\d{4}-\d{2}$/.test(String(value ?? ''))),
+            ),
+          ).sort()
+
+          if (paidMonths.length === 0) {
+            return <Typography.Text type="secondary">Expand to view paid months</Typography.Text>
+          }
+
+          if (paidMonths.length === 1) {
+            return <Typography.Text>{formatChequeMonth(paidMonths[0])}</Typography.Text>
+          }
+
+          return (
+            <Space direction="vertical" size={0}>
+              <Typography.Text>{formatChequeMonth(paidMonths[0])}</Typography.Text>
+              <Typography.Text type="secondary">+{paidMonths.length - 1} more months</Typography.Text>
+            </Space>
+          )
+        }
+
+        return (
+          <Typography.Text>
+            {record.status.toLowerCase() === 'paid' ? formatChequeMonth(record.paid_for_month) : '-'}
+          </Typography.Text>
+        )
+      },
+    },
+    {
       title: 'Status',
       key: 'status',
       render: (_, record) => {
@@ -498,11 +543,12 @@ export function ChequesPage() {
           onFinish={(values) => paidMutation.mutate(values)}
           initialValues={{
             paid_amount: paidTarget?.remaining_amount || paidTarget?.amount,
-            paid_date: new Date().toISOString().slice(0, 10),
+            paid_date: paidTarget?.paid_date || new Date().toISOString().slice(0, 10),
+            paid_for_month: paidTarget?.paid_for_month || paidTarget?.due_date?.slice(0, 7) || '',
             payment_mode: paidTarget?.payment_mode || 'Cheque',
             cheque_number: paidTarget?.cheque_number || '',
-            payment_reference: '',
-            paid_note: '',
+            payment_reference: paidTarget?.payment_reference || '',
+            paid_note: paidTarget?.paid_note || '',
           }}
           key={paidTarget?.cheque_id}
         >
@@ -511,6 +557,9 @@ export function ChequesPage() {
           </Form.Item>
           <Form.Item label="Paid Date" name="paid_date" rules={[{ required: true }]}>
             <Input type="date" />
+          </Form.Item>
+          <Form.Item label="Paid Rent For Month" name="paid_for_month" rules={[{ required: true }]}>
+            <Input type="month" />
           </Form.Item>
           <Form.Item label="Payment Mode" name="payment_mode" rules={[{ required: true }]}>
             <Select options={['Cheque', 'Cash', 'Bank Transfer', 'Other'].map((value) => ({ label: value, value }))} />

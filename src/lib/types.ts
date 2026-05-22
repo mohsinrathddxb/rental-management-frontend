@@ -331,6 +331,7 @@ export type LandlordCheque = {
   reschedule_count: number
   paid_amount: number
   paid_date: string
+  paid_for_month: string
   payment_reference: string
   paid_note: string
   issue_date: string

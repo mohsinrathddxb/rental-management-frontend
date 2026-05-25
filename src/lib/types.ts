@@ -135,6 +135,22 @@ export type ApiMessageResponse = {
   message: string
 }
 
+export type PublicOwnerProfile = {
+  owner_id: number
+  owner_name: string
+  public_slug: string
+  brand_name: string
+  brand_tagline: string
+  contact_email: string
+  contact_phone: string
+  status: string
+}
+
+export type PublicOwnerResponse = {
+  ok: boolean
+  item: PublicOwnerProfile
+}
+
 export type TelegramActionResponse = ApiMessageResponse & {
   chat_id?: string
   items?: TelegramRecentChat[]
@@ -536,6 +552,9 @@ export type UsersResponse = {
 export type OwnerRecord = {
   owner_id: number
   owner_name: string
+  public_slug: string
+  brand_name: string
+  brand_tagline: string
   contact_email: string
   contact_phone: string
   notes: string

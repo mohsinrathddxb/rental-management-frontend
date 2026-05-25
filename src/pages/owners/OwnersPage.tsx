@@ -1,6 +1,6 @@
 import { EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Card, Form, Input, Modal, Select, Spin, Table, Tag } from 'antd'
+import { Alert, Button, Card, Form, Input, Modal, Select, Space, Spin, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import { PageHeader } from '../../components/PageHeader'
@@ -10,6 +10,9 @@ import type { OwnerRecord, OwnersResponse } from '../../lib/types'
 
 type OwnerFormValues = {
   owner_name: string
+  public_slug?: string
+  brand_name?: string
+  brand_tagline?: string
   contact_email?: string
   contact_phone?: string
   notes?: string
@@ -55,12 +58,15 @@ export function OwnersPage() {
 
   const openCreateModal = () => {
     setEditingOwner(null)
-    setErrorMessage('')
-    form.setFieldsValue({
-      owner_name: '',
-      contact_email: '',
-      contact_phone: '',
-      notes: '',
+      setErrorMessage('')
+      form.setFieldsValue({
+        owner_name: '',
+        public_slug: '',
+        brand_name: '',
+        brand_tagline: '',
+        contact_email: '',
+        contact_phone: '',
+        notes: '',
       status: 'Active',
     })
     setIsModalOpen(true)
@@ -71,6 +77,9 @@ export function OwnersPage() {
     setErrorMessage('')
     form.setFieldsValue({
       owner_name: owner.owner_name,
+      public_slug: owner.public_slug,
+      brand_name: owner.brand_name,
+      brand_tagline: owner.brand_tagline,
       contact_email: owner.contact_email,
       contact_phone: owner.contact_phone,
       notes: owner.notes,
@@ -90,6 +99,35 @@ export function OwnersPage() {
             <div className="table-subtext">{record.contact_email || 'No email'}</div>
           </div>
         ),
+      },
+      {
+        title: 'Branding',
+        key: 'branding',
+        render: (_, record) => (
+          <Space direction="vertical" size={0}>
+            <Typography.Text>{record.brand_name || record.owner_name}</Typography.Text>
+            <Typography.Text type="secondary">
+              {record.brand_tagline || 'No public tagline'}
+            </Typography.Text>
+          </Space>
+        ),
+      },
+      {
+        title: 'Public Portal',
+        key: 'public_portal',
+        render: (_, record) => {
+          const signupUrl = `${window.location.origin}/signup?owner=${record.public_slug}`
+          return (
+            <Space direction="vertical" size={0}>
+              <Typography.Text code copyable={{ text: record.public_slug }}>
+                {record.public_slug}
+              </Typography.Text>
+              <Typography.Text copyable={{ text: signupUrl }} type="secondary">
+                Signup Link
+              </Typography.Text>
+            </Space>
+          )
+        },
       },
       {
         title: 'Phone',
@@ -174,6 +212,19 @@ export function OwnersPage() {
         >
           <Form.Item label="Owner Name" name="owner_name" rules={[{ required: true, message: 'Owner name is required.' }]}>
             <Input />
+          </Form.Item>
+          <Form.Item
+            extra="Used in public owner links such as /signup?owner=your-slug"
+            label="Public Slug"
+            name="public_slug"
+          >
+            <Input placeholder="marina-homes" />
+          </Form.Item>
+          <Form.Item label="Brand Name" name="brand_name">
+            <Input placeholder="Marina Homes" />
+          </Form.Item>
+          <Form.Item label="Brand Tagline" name="brand_tagline">
+            <Input placeholder="Private co-living management for Marina residents" />
           </Form.Item>
           <Form.Item label="Contact Email" name="contact_email" rules={[{ type: 'email', message: 'Enter a valid email.' }]}>
             <Input />

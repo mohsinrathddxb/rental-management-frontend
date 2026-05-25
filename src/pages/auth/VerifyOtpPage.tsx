@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { http } from '../../lib/http'
 import type { ApiMessageResponse } from '../../lib/types'
+import { useOwnerBranding, withOwnerQuery } from './owner-branding'
 
 type VerifyOtpValues = {
   otp: string
@@ -13,10 +14,12 @@ export function VerifyOtpPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const email = searchParams.get('email') ?? ''
+  const ownerSlug = searchParams.get('owner')
   const [submitting, setSubmitting] = useState(false)
   const [resending, setResending] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [infoMessage, setInfoMessage] = useState('')
+  const { ownerBranding } = useOwnerBranding()
 
   if (!email) {
     return <Navigate replace to="/forgot-password" />
@@ -31,7 +34,7 @@ export function VerifyOtpPage() {
         email,
         otp: values.otp,
       })
-      navigate(`/forgot-password/reset?email=${encodeURIComponent(email)}`, { replace: true })
+      navigate(`/forgot-password/reset?email=${encodeURIComponent(email)}${ownerSlug ? `&owner=${encodeURIComponent(ownerSlug)}` : ''}`, { replace: true })
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>
       setErrorMessage(axiosError.response?.data?.message ?? 'OTP verification failed.')
@@ -63,7 +66,9 @@ export function VerifyOtpPage() {
       <div className="auth-panel">
         <div className="auth-copy">
           <Typography.Text className="eyebrow">Email OTP</Typography.Text>
-          <Typography.Title>Verify your one-time password</Typography.Title>
+          <Typography.Title>
+            {ownerBranding ? `Verify your ${ownerBranding.brand_name} reset code` : 'Verify your one-time password'}
+          </Typography.Title>
           <Typography.Paragraph>
             If the email <strong>{email}</strong> is registered, a 6-digit
             verification code should arrive there shortly. Enter the OTP to
@@ -89,7 +94,7 @@ export function VerifyOtpPage() {
               <Button loading={resending} onClick={handleResend} type="link">
                 Resend OTP
               </Button>
-              <Link to="/login">Back to login</Link>
+              <Link to={withOwnerQuery('/login', ownerSlug)}>Back to login</Link>
             </Space>
           </Form>
         </Card>

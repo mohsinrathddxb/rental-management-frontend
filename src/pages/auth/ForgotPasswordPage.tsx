@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { http } from '../../lib/http'
 import type { ApiMessageResponse } from '../../lib/types'
+import { useOwnerBranding } from './owner-branding'
 
 type ForgotPasswordValues = {
   email: string
@@ -13,6 +14,7 @@ export function ForgotPasswordPage() {
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const { ownerSlug, ownerBranding, ownerQueryString } = useOwnerBranding()
 
   const handleFinish = async (values: ForgotPasswordValues) => {
     setSubmitting(true)
@@ -20,7 +22,7 @@ export function ForgotPasswordPage() {
 
     try {
       await http.post<ApiMessageResponse>('/auth/forgot-password-request', values)
-      navigate(`/forgot-password/verify?email=${encodeURIComponent(values.email)}`, {
+      navigate(`/forgot-password/verify?email=${encodeURIComponent(values.email)}${ownerSlug ? `&owner=${encodeURIComponent(ownerSlug)}` : ''}`, {
         replace: true,
       })
     } catch (error) {
@@ -38,7 +40,9 @@ export function ForgotPasswordPage() {
       <div className="auth-panel">
         <div className="auth-copy">
           <Typography.Text className="eyebrow">Reset Access</Typography.Text>
-          <Typography.Title>Request a password reset OTP</Typography.Title>
+          <Typography.Title>
+            {ownerBranding ? `Reset access for ${ownerBranding.brand_name}` : 'Request a password reset OTP'}
+          </Typography.Title>
           <Typography.Paragraph>
             Enter your registered email address and we will send a one-time password
             to verify the reset request.
@@ -56,7 +60,7 @@ export function ForgotPasswordPage() {
               Send OTP
             </Button>
             <div className="auth-links">
-              <Link to="/login">Back to login</Link>
+              <Link to={`/login${ownerQueryString}`}>Back to login</Link>
             </div>
           </Form>
         </Card>

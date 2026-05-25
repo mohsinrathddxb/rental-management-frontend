@@ -53,6 +53,15 @@ export function TenantsPage() {
       return isVacant || isCurrentPartition
     })
   }, [editingTenant?.partition_id, formOptions?.expense_partitions, selectedHouseId])
+  const selectedPartitionId = Form.useWatch('partition_id', form)
+  const selectedHouse = useMemo(
+    () => (formOptions?.houses ?? []).find((house) => house.houseID === Number(selectedHouseId || 0)),
+    [formOptions?.houses, selectedHouseId],
+  )
+  const selectedPartition = useMemo(
+    () => editablePartitionOptions.find((partition) => partition.partition_id === Number(selectedPartitionId || 0)),
+    [editablePartitionOptions, selectedPartitionId],
+  )
 
   useEffect(() => {
     if (!editingTenant) return
@@ -413,6 +422,19 @@ export function TenantsPage() {
         title={editingTenant ? `Edit Tenant: ${editingTenant.tenant_name}` : 'Edit Tenant'}
         width={760}
       >
+        {editingTenant ? (
+          <Alert
+            message="Tenant moves are restricted to this owner only."
+            description={
+              selectedPartition
+                ? `Current stay: ${editingTenant.house_name} / ${editingTenant.partition_number}. Selected stay: ${selectedHouse?.house_name || editingTenant.house_name} / ${selectedPartition.partition_number}.`
+                : `Current stay: ${editingTenant.house_name} / ${editingTenant.partition_number}. You can keep the same partition or move this tenant only to another partition inside this owner portfolio.`
+            }
+            showIcon
+            style={{ marginBottom: 16 }}
+            type="info"
+          />
+        ) : null}
         <Form form={form} layout="vertical" onFinish={(values) => updateTenantMutation.mutate(values)}>
           <Form.Item label="House" name="house_id" rules={[{ required: true }]}>
             <Select

@@ -4,6 +4,7 @@ import { Alert, Button, Card, Form, Input, Space, Typography } from 'antd'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/auth-context'
+import { useOwnerBranding, withOwnerQuery } from './owner-branding'
 
 type LoginFormValues = {
   identifier: string
@@ -16,6 +17,7 @@ export function LoginPage() {
   const { login } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const { ownerSlug, ownerBranding, ownerQuery } = useOwnerBranding()
   const successMessage =
     typeof location.state === 'object' &&
     location.state &&
@@ -46,18 +48,29 @@ export function LoginPage() {
     <div className="auth-shell">
       <div className="auth-panel">
         <div className="auth-copy">
-          <Typography.Text className="eyebrow">Rental Manager</Typography.Text>
+          <Typography.Text className="eyebrow">
+            {ownerBranding ? 'Owner Portal' : 'Rental Manager'}
+          </Typography.Text>
           <Typography.Title>
-            Sign in to the React rental frontend
+            {ownerBranding ? `Sign in to ${ownerBranding.brand_name}` : 'Sign in to the React rental frontend'}
           </Typography.Title>
           <Typography.Paragraph>
-            Admins and tenants both use the local PHP backend served through
-            XAMPP and backed by your MySQL rental database.
+            {ownerBranding
+              ? ownerBranding.brand_tagline || `Private access for ${ownerBranding.owner_name} tenants and staff.`
+              : 'Admins and tenants both use the Node rental backend with owner-scoped privacy controls.'}
           </Typography.Paragraph>
         </div>
 
         <Card className="auth-card">
           <Typography.Title level={3}>Account Login</Typography.Title>
+          {ownerQuery.isError ? (
+            <Alert
+              type="error"
+              showIcon
+              message="This owner sign-in link is invalid or inactive."
+              style={{ marginBottom: 16 }}
+            />
+          ) : null}
           {errorMessage ? (
             <Alert
               type="error"
@@ -107,8 +120,8 @@ export function LoginPage() {
               Sign In
             </Button>
             <Space className="auth-links" direction="vertical" size={6}>
-              <Link to="/forgot-password">Forgot Password?</Link>
-              <Link to="/signup">Create Tenant Account</Link>
+              <Link to={withOwnerQuery('/forgot-password', ownerSlug)}>Forgot Password?</Link>
+              <Link to={withOwnerQuery('/signup', ownerSlug)}>Create Tenant Account</Link>
             </Space>
           </Form>
         </Card>

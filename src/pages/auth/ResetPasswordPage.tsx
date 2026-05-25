@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { http } from '../../lib/http'
 import type { ApiMessageResponse } from '../../lib/types'
+import { useOwnerBranding, withOwnerQuery } from './owner-branding'
 
 type ResetPasswordValues = {
   password: string
@@ -14,8 +15,10 @@ export function ResetPasswordPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const email = searchParams.get('email') ?? ''
+  const ownerSlug = searchParams.get('owner')
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const { ownerBranding } = useOwnerBranding()
 
   if (!email) {
     return <Navigate replace to="/forgot-password" />
@@ -30,7 +33,7 @@ export function ResetPasswordPage() {
         email,
         ...values,
       })
-      navigate('/login', {
+      navigate(withOwnerQuery('/login', ownerSlug), {
         replace: true,
         state: { successMessage: 'Password reset successfully. Please sign in.' },
       })
@@ -49,7 +52,9 @@ export function ResetPasswordPage() {
       <div className="auth-panel">
         <div className="auth-copy">
           <Typography.Text className="eyebrow">New Password</Typography.Text>
-          <Typography.Title>Set a fresh password</Typography.Title>
+          <Typography.Title>
+            {ownerBranding ? `Set a new ${ownerBranding.brand_name} password` : 'Set a fresh password'}
+          </Typography.Title>
           <Typography.Paragraph>
             Your OTP has been verified for <strong>{email}</strong>. Choose a new
             password to complete the reset.
@@ -85,7 +90,7 @@ export function ResetPasswordPage() {
               Update Password
             </Button>
             <div className="auth-links">
-              <Link to="/login">Back to login</Link>
+              <Link to={withOwnerQuery('/login', ownerSlug)}>Back to login</Link>
             </div>
           </Form>
         </Card>

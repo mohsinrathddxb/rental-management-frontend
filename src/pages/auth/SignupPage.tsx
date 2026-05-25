@@ -1,9 +1,10 @@
 import { AxiosError } from 'axios'
-import { Alert, Button, Card, Form, Input, Typography } from 'antd'
+import { Alert, Button, Card, Form, Input, Spin, Typography } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { http } from '../../lib/http'
 import type { ApiMessageResponse } from '../../lib/types'
+import { useOwnerBranding, withOwnerQuery } from './owner-branding'
 
 type SignupFormValues = {
   full_name: string
@@ -22,14 +23,18 @@ export function SignupPage() {
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const { ownerSlug, ownerBranding, ownerQuery, ownerQueryString } = useOwnerBranding()
 
   const handleFinish = async (values: SignupFormValues) => {
     setSubmitting(true)
     setErrorMessage('')
 
     try {
-      await http.post<ApiMessageResponse>('/auth/signup', values)
-      navigate('/login', {
+      await http.post<ApiMessageResponse>('/auth/signup', {
+        ...values,
+        owner_slug: ownerSlug || undefined,
+      })
+      navigate(`/login${ownerQueryString}`, {
         replace: true,
         state: { successMessage: 'Account created successfully. Please sign in.' },
       })
@@ -45,18 +50,41 @@ export function SignupPage() {
     <div className="auth-shell">
       <div className="auth-panel">
         <div className="auth-copy">
-          <Typography.Text className="eyebrow">New Tenant</Typography.Text>
-          <Typography.Title>Create your tenant account</Typography.Title>
+          <Typography.Text className="eyebrow">
+            {ownerBranding ? 'Owner Sign Up' : 'New Tenant'}
+          </Typography.Text>
+          <Typography.Title>
+            {ownerBranding ? `Create your ${ownerBranding.brand_name} tenant account` : 'Create your tenant account'}
+          </Typography.Title>
           <Typography.Paragraph>
-            Sign up first, then an admin can assign your house and partition later.
-            You can still access your account immediately after registration.
+            {ownerBranding
+              ? ownerBranding.brand_tagline || `Register under ${ownerBranding.owner_name} and an admin can assign your house and partition later.`
+              : 'Sign up first, then an admin can assign your house and partition later. You can still access your account immediately after registration.'}
           </Typography.Paragraph>
         </div>
 
         <Card className="auth-card">
           <Typography.Title level={3}>Tenant Sign Up</Typography.Title>
+          {ownerQuery.isLoading ? <Spin style={{ marginBottom: 16 }} /> : null}
+          {ownerQuery.isError ? (
+            <Alert
+              className="auth-helper"
+              message="This owner sign-up link is invalid or inactive."
+              showIcon
+              type="error"
+            />
+          ) : null}
+          {ownerBranding ? (
+            <Alert
+              className="auth-helper"
+              message={`Creating account under ${ownerBranding.owner_name}`}
+              description={`Public link: ${ownerBranding.public_slug}`}
+              showIcon
+              type="info"
+            />
+          ) : null}
           {errorMessage ? <Alert className="auth-helper" message={errorMessage} showIcon type="error" /> : null}
-          <Form<SignupFormValues> layout="vertical" onFinish={handleFinish}>
+          <Form<SignupFormValues> disabled={ownerQuery.isLoading || !!ownerSlug && ownerQuery.isError} layout="vertical" onFinish={handleFinish}>
             <Form.Item label="Full Name" name="full_name" rules={[{ required: true }]}>
               <Input size="large" />
             </Form.Item>
@@ -106,7 +134,7 @@ export function SignupPage() {
               Create Account
             </Button>
             <div className="auth-links">
-              <Link to="/login">Back to login</Link>
+              <Link to={withOwnerQuery('/login', ownerSlug)}>Back to login</Link>
             </div>
           </Form>
         </Card>

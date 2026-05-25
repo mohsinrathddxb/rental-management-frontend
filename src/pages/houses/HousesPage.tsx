@@ -1,22 +1,46 @@
 import {
   AppstoreOutlined,
   CameraOutlined,
+  ColumnHeightOutlined,
   DeleteOutlined,
   EditOutlined,
   HomeOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Card, Form, Image, Input, InputNumber, Modal, Popconfirm, Select, Space, Spin, Table, Tag, Typography, message } from 'antd'
+import { Alert, Button, Card, Checkbox, Divider, Form, Image, Input, InputNumber, Modal, Popconfirm, Popover, Select, Space, Spin, Table, Tag, Typography, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { getApiErrorMessage } from '../../lib/api-errors'
 import { http } from '../../lib/http'
-import type { House, HousesResponse } from '../../lib/types'
+import type { House, HousesResponse, TablePreferenceResponse } from '../../lib/types'
 
 async function fetchHouses() {
   const { data } = await http.get<HousesResponse>('/resources/houses')
+  return data
+}
+
+const housesScreenKey = 'houses'
+const houseColumnOptions = [
+  { label: 'House', value: 'house_name' },
+  { label: 'Status', value: 'house_status' },
+  { label: 'Rooms', value: 'number_of_rooms' },
+  { label: 'Bedrooms', value: 'num_of_bedrooms' },
+  { label: 'Rent', value: 'rent_amount' },
+  { label: 'Location', value: 'location' },
+  { label: 'Partitions', value: 'partitions' },
+  { label: 'Photos', value: 'photo_count' },
+  { label: 'Actions', value: 'actions' },
+] as const
+const defaultVisibleHouseColumns = houseColumnOptions
+  .map((option) => option.value)
+  .filter((value) => value !== 'house_status')
+
+async function fetchHouseTablePreference() {
+  const { data } = await http.get<TablePreferenceResponse>('/resources/table-preferences', {
+    params: { screen: housesScreenKey },
+  })
   return data
 }
 
@@ -34,9 +58,15 @@ export function HousesPage() {
   const [previewTitle, setPreviewTitle] = useState('')
   const [previewImages, setPreviewImages] = useState<string[]>([])
   const [editingHouse, setEditingHouse] = useState<House | null>(null)
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState<string[]>(defaultVisibleHouseColumns)
   const { data, isLoading, isError } = useQuery({
     queryKey: ['houses'],
     queryFn: fetchHouses,
+  })
+  const { data: preferenceData } = useQuery({
+    queryKey: ['table-preferences', housesScreenKey],
+    queryFn: fetchHouseTablePreference,
+    enabled: Boolean(data?.canManage),
   })
 
   const updateMutation = useMutation({
@@ -75,7 +105,31 @@ export function HousesPage() {
     },
   })
 
-  const columns: ColumnsType<House> = [
+  const preferenceMutation = useMutation({
+    mutationFn: async (nextVisibleColumns: string[]) => {
+      const { data } = await http.post<TablePreferenceResponse>('/resources/table-preferences', {
+        screen: housesScreenKey,
+        visible_columns: nextVisibleColumns,
+      })
+      return data
+    },
+    onSuccess: (response) => {
+      if (response.visible_columns?.length) {
+        setVisibleColumnKeys(response.visible_columns)
+      }
+    },
+    onError: (error: unknown) => {
+      message.error(getApiErrorMessage(error, 'Column preferences could not be saved.'))
+    },
+  })
+
+  useEffect(() => {
+    if (preferenceData?.visible_columns?.length) {
+      setVisibleColumnKeys(preferenceData.visible_columns)
+    }
+  }, [preferenceData])
+
+  const allColumns: ColumnsType<House> = [
     {
       title: 'House',
       dataIndex: 'house_name',
@@ -195,6 +249,32 @@ export function HousesPage() {
     },
   ]
 
+  const columns = useMemo(
+    () => allColumns.filter((column) => visibleColumnKeys.includes(String(column.key ?? ''))),
+    [allColumns, visibleColumnKeys],
+  )
+
+  const columnPickerContent = (
+    <div style={{ maxWidth: 260 }}>
+      <Typography.Text strong>Visible Columns</Typography.Text>
+      <Divider style={{ margin: '12px 0' }} />
+      <Checkbox.Group
+        options={houseColumnOptions as unknown as { label: string; value: string }[]}
+        value={visibleColumnKeys}
+        onChange={(checkedValues) => {
+          const nextVisibleColumns = checkedValues.map((value) => String(value))
+          if (nextVisibleColumns.length === 0) {
+            message.warning('Keep at least one column visible.')
+            return
+          }
+
+          setVisibleColumnKeys(nextVisibleColumns)
+          preferenceMutation.mutate(nextVisibleColumns)
+        }}
+      />
+    </div>
+  )
+
   return (
     <div className="page-stack">
       <PageHeader
@@ -202,13 +282,20 @@ export function HousesPage() {
         subtitle="Vacant houses first, then houses with available vacant partitions."
         breadcrumbs={[{ title: 'Dashboard' }, { title: 'Houses' }]}
         extra={
-          <Button
-            icon={<HomeOutlined />}
-            onClick={() => navigate('/create/house')}
-            type="primary"
-          >
-            Add House
-          </Button>
+          <Space wrap>
+            {data?.canManage ? (
+              <Popover content={columnPickerContent} placement="bottomRight" trigger="click">
+                <Button icon={<ColumnHeightOutlined />}>Columns</Button>
+              </Popover>
+            ) : null}
+            <Button
+              icon={<HomeOutlined />}
+              onClick={() => navigate('/create/house')}
+              type="primary"
+            >
+              Add House
+            </Button>
+          </Space>
         }
       />
 

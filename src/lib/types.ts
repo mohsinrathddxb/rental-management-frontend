@@ -74,6 +74,13 @@ export type HousesResponse = {
   items: House[]
 }
 
+export type TablePreferenceResponse = {
+  ok: boolean
+  message?: string
+  screen: string
+  visible_columns: string[]
+}
+
 export type Partition = {
   partition_id: number
   house_id: number

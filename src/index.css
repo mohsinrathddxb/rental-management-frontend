@@ -63,9 +63,51 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 0 24px;
+  min-height: 72px;
+  height: auto !important;
+  line-height: normal !important;
+  padding: 10px 24px;
   background: linear-gradient(135deg, #0b1c2e, #102946) !important;
   border-bottom: 2px solid #d6b766;
+}
+
+.app-header__section {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.app-header__section--account {
+  justify-content: flex-end;
+}
+
+.app-header__identity {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  gap: 2px;
+}
+
+.app-header__title.ant-typography {
+  margin: 0 !important;
+  line-height: 1.15 !important;
+  color: #f8f5ef;
+}
+
+.app-header__subtitle.ant-typography {
+  line-height: 1.1;
+}
+
+.app-header__account {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.app-header__email.ant-typography {
+  margin: 0 !important;
+  line-height: 1.2;
 }
 
 .app-content {
@@ -206,6 +248,11 @@ a {
 }
 
 @media (max-width: 992px) {
+  .app-header {
+    min-height: 64px;
+    padding: 8px 16px;
+  }
+
   .app-content {
     padding: 16px;
   }
@@ -218,6 +265,10 @@ a {
   .auth-panel {
     grid-template-columns: 1fr;
     padding: 18px;
+  }
+
+  .app-header__title.ant-typography {
+    font-size: 22px !important;
   }
 
   .responsive-two-field-row {

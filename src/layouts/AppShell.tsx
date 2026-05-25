@@ -286,7 +286,7 @@ export function AppShell({ children }: PropsWithChildren) {
       {isMobile ? null : <Sider width={260}>{sideContent}</Sider>}
       <Layout>
         <Header className="app-header">
-          <Space size="middle">
+          <Space className="app-header__section" size="middle">
             {isMobile ? (
               <Button
                 aria-label="Open navigation"
@@ -294,22 +294,22 @@ export function AppShell({ children }: PropsWithChildren) {
                 onClick={() => setDrawerOpen(true)}
               />
             ) : null}
-            <div>
-              <Typography.Title level={4} style={{ margin: 0, color: '#f8f5ef' }}>
+            <div className="app-header__identity">
+              <Typography.Title className="app-header__title" level={4} style={{ margin: 0, color: '#f8f5ef' }}>
                 {user?.name ?? 'Rental Manager'}
               </Typography.Title>
-              <Typography.Text style={{ color: '#d9c78d' }}>
+              <Typography.Text className="app-header__subtitle" style={{ color: '#d9c78d' }}>
                 {user?.role ?? 'Session'}
               </Typography.Text>
             </div>
           </Space>
-          <Space size="middle">
-            <Space size="small">
+          <Space className="app-header__section app-header__section--account" size="middle">
+            <Space className="app-header__account" size="small">
               <Avatar style={{ background: '#d9b65f', color: '#0b1c2e' }}>
                 {initials}
               </Avatar>
               {!isMobile ? (
-                <Typography.Text style={{ color: '#f8f5ef' }}>
+                <Typography.Text className="app-header__email" style={{ color: '#f8f5ef' }}>
                   {user?.email}
                 </Typography.Text>
               ) : null}

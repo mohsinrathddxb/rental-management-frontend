@@ -8,6 +8,7 @@ import { SignupPage } from '../pages/auth/SignupPage'
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage'
 import { VerifyOtpPage } from '../pages/auth/VerifyOtpPage'
 import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage'
+import { CreateOwnerAdminPage } from '../pages/auth/CreateOwnerAdminPage'
 import { DashboardPage } from '../pages/dashboard/DashboardPage'
 import { ExpensesPage } from '../pages/expenses/ExpensesPage'
 import { ReportsPage } from '../pages/reports/ReportsPage'
@@ -139,6 +140,7 @@ export function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<PublicLoginRoute />} />
+        <Route path="/owner-admin-signup" element={<PublicAuthRoute><CreateOwnerAdminPage /></PublicAuthRoute>} />
         <Route path="/signup" element={<PublicAuthRoute><SignupPage /></PublicAuthRoute>} />
         <Route path="/forgot-password" element={<PublicAuthRoute><ForgotPasswordPage /></PublicAuthRoute>} />
         <Route path="/forgot-password/verify" element={<PublicAuthRoute><VerifyOtpPage /></PublicAuthRoute>} />

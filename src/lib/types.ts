@@ -158,6 +158,12 @@ export type PublicOwnerResponse = {
   item: PublicOwnerProfile
 }
 
+export type UsernameAvailabilityResponse = {
+  ok: boolean
+  available: boolean
+  message: string
+}
+
 export type TelegramActionResponse = ApiMessageResponse & {
   chat_id?: string
   items?: TelegramRecentChat[]

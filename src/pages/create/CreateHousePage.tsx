@@ -14,6 +14,7 @@ type CreateHouseValues = {
   rent: number
   location: string
   status: string
+  partition_count: number
   house_photos?: UploadFile[]
 }
 
@@ -30,6 +31,7 @@ export function CreateHousePage() {
       formData.append('rent', String(values.rent))
       formData.append('location', values.location)
       formData.append('status', values.status)
+      formData.append('partition_count', String(values.partition_count))
       ;(values.house_photos ?? []).forEach((file) => {
         if (file.originFileObj) formData.append('house_photos[]', file.originFileObj)
       })
@@ -53,13 +55,21 @@ export function CreateHousePage() {
       <Card>
         {message ? <Alert type="success" showIcon message={message} style={{ marginBottom: 16 }} /> : null}
         {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
-        <Form<CreateHouseValues> layout="vertical" onFinish={(values) => mutation.mutate(values)}>
+        <Form<CreateHouseValues> layout="vertical" onFinish={(values) => mutation.mutate(values)} initialValues={{ status: 'Vacant', partition_count: 0 }}>
           <Form.Item label="House Name" name="hname" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item label="Number of Rooms" name="numOfRooms" rules={[{ required: true }]}><InputNumber min={1} style={{ width: '100%' }} /></Form.Item>
           <Form.Item label="Bedrooms Per Unit" name="numOfbRooms" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
           <Form.Item label="Rent Amount" name="rent" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
+          <Form.Item label="Number of Partitions" name="partition_count" tooltip="Automatically create linked vacant partitions for this new house.">
+            <Select
+              options={Array.from({ length: 101 }, (_, index) => ({
+                label: String(index),
+                value: index,
+              }))}
+            />
+          </Form.Item>
           <Form.Item label="Location" name="location" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item label="Status" name="status" initialValue="Vacant" rules={[{ required: true }]}><Select options={[{ label: 'Vacant', value: 'Vacant' }, { label: 'Occupied', value: 'Occupied' }]} /></Form.Item>
+          <Form.Item label="Status" name="status" rules={[{ required: true }]} extra="If you auto-create partitions, the new partitions will be created as Vacant and the house will remain available for assignment."><Select options={[{ label: 'Vacant', value: 'Vacant' }, { label: 'Occupied', value: 'Occupied' }]} /></Form.Item>
           <Form.Item label="House Photos" name="house_photos" valuePropName="fileList" getValueFromEvent={(e: { fileList: UploadFile[] }) => e?.fileList}><Upload multiple beforeUpload={() => false} listType="text"><Button>Choose Files</Button></Upload></Form.Item>
           <Button htmlType="submit" loading={mutation.isPending} type="primary">Save House</Button>
         </Form>

@@ -101,7 +101,9 @@ function ComplaintCard({
   onUpdate: (values: { complaint_id: number; status: string; admin_reason: string }) => void
   onReopen: (complaint_id: number) => void
 }) {
-  const canTenantReopen = !canManage && ['completed', 'rejected'].includes(complaint.status.toLowerCase())
+  const normalizedStatus = complaint.status.toLowerCase()
+  const isCompleted = normalizedStatus === 'completed'
+  const canTenantReopen = !canManage && normalizedStatus === 'rejected'
 
   return (
     <Card style={{ marginBottom: 16 }}>
@@ -128,7 +130,7 @@ function ComplaintCard({
         <ComplaintAttachments attachments={complaint.attachments} />
         <ComplaintTimeline history={complaint.history} />
 
-        {canManage ? (
+        {canManage && !isCompleted ? (
           <Form
             layout="vertical"
             onFinish={(values) => onUpdate({ complaint_id: complaint.complaint_id, status: values.status, admin_reason: values.admin_reason ?? '' })}
@@ -145,8 +147,20 @@ function ComplaintCard({
               </Form.Item>
             </Space>
           </Form>
+        ) : canManage && isCompleted ? (
+          <Alert
+            type="success"
+            showIcon
+            message="This complaint is completed and locked. Raise a new complaint if more work is needed."
+          />
         ) : canTenantReopen ? (
           <Button onClick={() => onReopen(complaint.complaint_id)}>Reopen Complaint</Button>
+        ) : isCompleted ? (
+          <Alert
+            type="info"
+            showIcon
+            message="This complaint is completed. If there is a new issue, please raise a new complaint."
+          />
         ) : null}
       </Space>
     </Card>

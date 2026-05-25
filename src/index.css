@@ -186,6 +186,25 @@ a {
   text-transform: uppercase;
 }
 
+.responsive-two-field-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.responsive-two-field-row__item {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.responsive-two-field-row__item--code {
+  flex: 0 0 220px;
+}
+
+.responsive-two-field-row .ant-form-item {
+  width: 100%;
+}
+
 @media (max-width: 992px) {
   .app-content {
     padding: 16px;
@@ -199,5 +218,16 @@ a {
   .auth-panel {
     grid-template-columns: 1fr;
     padding: 18px;
+  }
+
+  .responsive-two-field-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .responsive-two-field-row__item,
+  .responsive-two-field-row__item--code {
+    flex: 1 1 auto;
+    width: 100%;
   }
 }

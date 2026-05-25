@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Card, Form, Input, Select, Space, Spin } from 'antd'
+import { Alert, Button, Card, Form, Input, Select, Spin } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
@@ -84,10 +84,10 @@ export function CreateTenantPage() {
                     <Form.Item {...field} label="Tenant Name" name={[field.name, 'tname']} rules={[{ required: true }]}><Input /></Form.Item>
                     <Form.Item {...field} label="Email" name={[field.name, 'temail']} rules={[{ required: true, type: 'email' }]}><Input /></Form.Item>
                     <Form.Item {...field} label="ID Number" name={[field.name, 'idnum']}><Input /></Form.Item>
-                    <Space style={{ display: 'flex' }} align="start">
-                      <Form.Item {...field} label="Phone Code" name={[field.name, 'phone_code']} rules={[{ required: true }]}><Select style={{ width: 220 }} options={(data?.countries ?? []).map((country) => ({ label: `${country.code} ${country.name}`, value: country.code }))} /></Form.Item>
-                      <Form.Item {...field} label="Phone Number" name={[field.name, 'phone_local']}><Input /></Form.Item>
-                    </Space>
+                    <div className="responsive-two-field-row">
+                      <Form.Item {...field} className="responsive-two-field-row__item responsive-two-field-row__item--code" label="Phone Code" name={[field.name, 'phone_code']} rules={[{ required: true }]}><Select options={(data?.countries ?? []).map((country) => ({ label: `${country.code} ${country.name}`, value: country.code }))} /></Form.Item>
+                      <Form.Item {...field} className="responsive-two-field-row__item" label="Phone Number" name={[field.name, 'phone_local']}><Input /></Form.Item>
+                    </div>
                     <Form.Item {...field} label="Profession" name={[field.name, 'prof']}><Input /></Form.Item>
                     <Form.Item {...field} label="Telegram Username" name={[field.name, 'telegram_username']}><Input /></Form.Item>
                     <Form.Item {...field} label="Telegram Chat ID" name={[field.name, 'telegram_chat_id']}><Input /></Form.Item>

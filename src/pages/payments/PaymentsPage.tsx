@@ -10,20 +10,13 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
-import { assetBaseURL, http } from '../../lib/http'
+import { openAuthenticatedPdf } from '../../lib/documents'
+import { http } from '../../lib/http'
 import type { Payment, PaymentsResponse, TelegramActionResponse } from '../../lib/types'
 
 async function fetchPayments() {
   const { data } = await http.get<PaymentsResponse>('/resources/payments')
   return data
-}
-
-function buildInvoicePdfHref(invoiceNumber: string) {
-  return `${assetBaseURL}/api/admin/documents/invoice-pdf?invoice=${encodeURIComponent(invoiceNumber)}`
-}
-
-function buildReceiptPdfHref(paymentId: number) {
-  return `${assetBaseURL}/api/admin/documents/payment-receipt-pdf?payment=${paymentId}`
 }
 
 export function PaymentsPage() {
@@ -46,6 +39,22 @@ export function PaymentsPage() {
     },
     onError: (error: any) => {
       message.error(error?.response?.data?.message || 'Payment receipt could not be sent on Telegram.')
+    },
+  })
+
+  const documentMutation = useMutation({
+    mutationFn: async (payload: { type: 'invoice' | 'receipt'; invoiceNumber?: string; paymentId?: number }) => {
+      if (payload.type === 'invoice' && payload.invoiceNumber) {
+        await openAuthenticatedPdf('/documents/invoice-pdf', { invoice: payload.invoiceNumber })
+        return
+      }
+
+      if (payload.type === 'receipt' && payload.paymentId) {
+        await openAuthenticatedPdf('/documents/payment-receipt-pdf', { payment: payload.paymentId })
+      }
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'PDF could not be opened.')
     },
   })
 
@@ -73,20 +82,30 @@ export function PaymentsPage() {
         <Space wrap>
           {record.invoice_pdf_url ? (
             <Button
-              href={buildInvoicePdfHref(record.invoiceNumber)}
               icon={<FileTextOutlined />}
+              loading={documentMutation.isPending && documentMutation.variables?.type === 'invoice' && documentMutation.variables?.invoiceNumber === record.invoiceNumber}
+              onClick={() =>
+                documentMutation.mutate({
+                  type: 'invoice',
+                  invoiceNumber: record.invoiceNumber,
+                })
+              }
               size="small"
-              target="_blank"
             >
               Invoice PDF
             </Button>
           ) : null}
           {record.receipt_pdf_url ? (
             <Button
-              href={buildReceiptPdfHref(record.paymentID)}
               icon={<FilePdfOutlined />}
+              loading={documentMutation.isPending && documentMutation.variables?.type === 'receipt' && documentMutation.variables?.paymentId === record.paymentID}
+              onClick={() =>
+                documentMutation.mutate({
+                  type: 'receipt',
+                  paymentId: record.paymentID,
+                })
+              }
               size="small"
-              target="_blank"
             >
               Receipt PDF
             </Button>

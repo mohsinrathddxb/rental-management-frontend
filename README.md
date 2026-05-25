@@ -16,6 +16,12 @@ React + TypeScript + Vite frontend for the Node rental management backend.
 
 The deployed frontend talks to the Node backend through `/api/admin` routes and backend-hosted `/uploads` assets.
 
+## End user documentation
+
+For a detailed user-facing manual, see:
+
+`docs/END_USER_GUIDE.md`
+
 ## Setup
 
 1. Copy `.env.example` to `.env`

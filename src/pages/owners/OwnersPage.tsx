@@ -116,14 +116,14 @@ export function OwnersPage() {
         title: 'Public Portal',
         key: 'public_portal',
         render: (_, record) => {
-          const signupUrl = `${window.location.origin}/signup?owner=${record.public_slug}`
+          const loginUrl = `${window.location.origin}/login?owner=${record.public_slug}`
           return (
             <Space direction="vertical" size={0}>
               <Typography.Text code copyable={{ text: record.public_slug }}>
                 {record.public_slug}
               </Typography.Text>
-              <Typography.Text copyable={{ text: signupUrl }} type="secondary">
-                Signup Link
+              <Typography.Text copyable={{ text: loginUrl }} type="secondary">
+                Login Link
               </Typography.Text>
             </Space>
           )
@@ -214,7 +214,7 @@ export function OwnersPage() {
             <Input />
           </Form.Item>
           <Form.Item
-            extra="Used in public owner links such as /signup?owner=your-slug"
+            extra="Used in public owner links such as /login?owner=your-slug"
             label="Public Slug"
             name="public_slug"
           >

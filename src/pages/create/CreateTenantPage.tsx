@@ -43,7 +43,7 @@ export function CreateTenantPage() {
   const [houseValue, setHouseValue] = useState<string>(initialHouseValue)
   const mutation = useMutation({
     mutationFn: (values: CreateTenantValues) => http.post('/create/tenant', values),
-    onSuccess: async () => {
+    onSuccess: async (response) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['form-options'] }),
         queryClient.invalidateQueries({ queryKey: ['tenants'] }),
@@ -51,7 +51,15 @@ export function CreateTenantPage() {
         queryClient.invalidateQueries({ queryKey: ['partitions'] }),
       ])
       setError('')
-      setMessage('Tenant saved successfully.')
+      const createdAccounts = response.data?.created_accounts ?? []
+      if (createdAccounts.length > 0) {
+        const accountSummary = createdAccounts
+          .map((account: { email: string; initial_password: string }) => `${account.email} / ${account.initial_password}`)
+          .join(' | ')
+        setMessage(`Tenant saved successfully. Login email / initial password: ${accountSummary}`)
+      } else {
+        setMessage('Tenant saved successfully.')
+      }
       setTimeout(() => navigate('/tenants'), 600)
     },
     onError: (err: unknown) => {
@@ -86,7 +94,7 @@ export function CreateTenantPage() {
                     <Form.Item {...field} label="ID Number" name={[field.name, 'idnum']}><Input /></Form.Item>
                     <div className="responsive-two-field-row">
                       <Form.Item {...field} className="responsive-two-field-row__item responsive-two-field-row__item--code" label="Phone Code" name={[field.name, 'phone_code']} rules={[{ required: true }]}><Select options={(data?.countries ?? []).map((country) => ({ label: `${country.code} ${country.name}`, value: country.code }))} /></Form.Item>
-                      <Form.Item {...field} className="responsive-two-field-row__item" label="Phone Number" name={[field.name, 'phone_local']}><Input /></Form.Item>
+                      <Form.Item {...field} className="responsive-two-field-row__item" label="Phone Number" name={[field.name, 'phone_local']} rules={[{ required: true }]}><Input /></Form.Item>
                     </div>
                     <Form.Item {...field} label="Profession" name={[field.name, 'prof']}><Input /></Form.Item>
                     <Form.Item {...field} label="Telegram Username" name={[field.name, 'telegram_username']}><Input /></Form.Item>

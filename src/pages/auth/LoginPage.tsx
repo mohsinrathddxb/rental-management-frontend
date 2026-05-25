@@ -137,7 +137,6 @@ export function LoginPage() {
             </Button>
             <Space className="auth-links" direction="vertical" size={6}>
               <Link to={withOwnerQuery('/forgot-password', ownerSlug)}>Forgot Password?</Link>
-              <Link to={withOwnerQuery('/signup', ownerSlug)}>Create Tenant Account</Link>
               {!ownerSlug ? <Link to="/owner-admin-signup">Create New Owner Admin</Link> : null}
             </Space>
           </Form>

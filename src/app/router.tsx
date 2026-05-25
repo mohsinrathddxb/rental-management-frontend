@@ -4,7 +4,6 @@ import type { ReactElement } from 'react'
 import { AppShell } from '../layouts/AppShell'
 import { useAuth } from '../lib/auth-context'
 import { LoginPage } from '../pages/auth/LoginPage'
-import { SignupPage } from '../pages/auth/SignupPage'
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage'
 import { VerifyOtpPage } from '../pages/auth/VerifyOtpPage'
 import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage'
@@ -141,7 +140,7 @@ export function AppRouter() {
       <Routes>
         <Route path="/login" element={<PublicLoginRoute />} />
         <Route path="/owner-admin-signup" element={<PublicAuthRoute><CreateOwnerAdminPage /></PublicAuthRoute>} />
-        <Route path="/signup" element={<PublicAuthRoute><SignupPage /></PublicAuthRoute>} />
+        <Route path="/signup" element={<Navigate to="/login" replace />} />
         <Route path="/forgot-password" element={<PublicAuthRoute><ForgotPasswordPage /></PublicAuthRoute>} />
         <Route path="/forgot-password/verify" element={<PublicAuthRoute><VerifyOtpPage /></PublicAuthRoute>} />
         <Route path="/forgot-password/reset" element={<PublicAuthRoute><ResetPasswordPage /></PublicAuthRoute>} />

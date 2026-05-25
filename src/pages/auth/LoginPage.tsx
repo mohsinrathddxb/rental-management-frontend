@@ -39,9 +39,13 @@ export function LoginPage() {
       navigate('/dashboard', { replace: true })
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>
+      const fallbackMessage =
+        error instanceof Error
+          ? error.message
+          : 'Login failed. Please check your credentials and try again.'
       setErrorMessage(
         axiosError.response?.data?.message ??
-          'Login failed. Please check your credentials and try again.',
+          fallbackMessage,
       )
     } finally {
       setSubmitting(false)

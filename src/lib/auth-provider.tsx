@@ -63,8 +63,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
       uname: identifier,
       password: payload.password,
     })
-    setUser(data.user)
-    return data.user
+
+    try {
+      const { data: sessionData } = await http.get<SessionResponse>('/auth/session')
+      if (sessionData.authenticated && sessionData.user) {
+        setUser(sessionData.user)
+        return sessionData.user
+      }
+    } catch {
+      // handled below with a clearer message
+    }
+
+    setUser(null)
+    throw new Error(data?.user ? 'Session could not be established after login.' : 'Login failed.')
   }
 
   const logout = async () => {

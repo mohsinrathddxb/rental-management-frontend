@@ -31,3 +31,27 @@ export const http = axios.create({
     'X-Requested-With': 'XMLHttpRequest',
   },
 })
+
+let authRedirectInFlight = false
+
+function shouldHandleUnauthorized(url: string | undefined) {
+  const normalizedUrl = String(url ?? '')
+  return !normalizedUrl.includes('/auth/login') && !normalizedUrl.includes('/auth/session')
+}
+
+http.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const status = error?.response?.status
+    const requestUrl = String(error?.config?.url ?? '')
+
+    if (status === 401 && shouldHandleUnauthorized(requestUrl) && typeof window !== 'undefined' && !authRedirectInFlight) {
+      authRedirectInFlight = true
+      const loginUrl = new URL('/login', window.location.origin)
+      loginUrl.searchParams.set('reason', 'session-expired')
+      window.location.replace(loginUrl.toString())
+    }
+
+    return Promise.reject(error)
+  },
+)

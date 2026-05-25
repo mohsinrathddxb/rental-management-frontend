@@ -18,6 +18,10 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const { ownerSlug, ownerBranding, ownerQuery } = useOwnerBranding()
+  const sessionExpiredMessage =
+    new URLSearchParams(location.search).get('reason') === 'session-expired'
+      ? 'Your session expired. Please sign in again.'
+      : ''
   const successMessage =
     typeof location.state === 'object' &&
     location.state &&
@@ -68,6 +72,14 @@ export function LoginPage() {
               type="error"
               showIcon
               message="This owner sign-in link is invalid or inactive."
+              style={{ marginBottom: 16 }}
+            />
+          ) : null}
+          {sessionExpiredMessage ? (
+            <Alert
+              type="warning"
+              showIcon
+              message={sessionExpiredMessage}
               style={{ marginBottom: 16 }}
             />
           ) : null}
